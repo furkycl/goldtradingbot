@@ -24,16 +24,29 @@ risk:
   max_trades_per_day: 4
 
 news:
+  # verified working 2026-10-04; run `python -m goldbot probe-feeds` to re-check
   rss:
+    - https://www.financialjuice.com/feed.ashx?xy=rss
+    - https://investinglive.com/feed/news
+    - https://www.investing.com/rss/news_95.rss
     - https://www.fxstreet.com/rss/news
-    - https://www.kitco.com/rss/KitcoNews.xml
     - https://www.investing.com/rss/news_11.rss
-    - https://www.forexlive.com/feed/news
-    - https://feeds.marketwatch.com/marketwatch/marketpulse/
+    - https://www.federalreserve.gov/feeds/press_monetary.xml
     - https://www.federalreserve.gov/feeds/press_all.xml
+    - https://www.ecb.europa.eu/rss/press.html
+    - https://www.bls.gov/feed/cpi.rss
+    - https://www.bls.gov/feed/empsit.rss
+    - https://feeds.content.dowjones.io/public/rss/mw_topstories
+    - https://www.bloomberght.com/rss
   telegram:
     session: goldbot
-    channels: []           # e.g. ["@channelname"] — public channels you trust
+    # wire-style headline channels (checked 2026-10-04). Not used unless
+    # TELEGRAM_API_ID/HASH are set. Avoid "signal"/"VIP" channels.
+    channels:
+      - WalterBloomberg
+      - financialjuice
+      - BreakingMarketNews
+      - disclosetv
 
 broker_options:
   symbol: XAUUSD           # MT5 symbol name at your broker (e.g. XAUUSD, GOLD) or PAXG/USDT for ccxt

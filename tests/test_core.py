@@ -178,3 +178,37 @@ def test_small_account_paxg_profile_trades_long_only(df):
     assert all(t.side == 1 for t in r.trades)
     for t in r.trades:  # notional never exceeds equity (no leverage)
         assert t.lots * t.entry <= s.starting_equity * 3
+
+
+# ------------------------------------------------------- research variants
+def test_daily_trend_has_no_lookahead(df):
+    from goldbot.strategy import daily_trend
+    full = daily_trend(df["close"], 20)
+    cut = daily_trend(df["close"].iloc[:1500], 20)
+    assert (full.iloc[:1500] == cut).all()
+    # value used during day D must not depend on any bar of day D
+    day = df.index[1000].normalize()
+    same_day = full[df.index.normalize() == day]
+    assert same_day.nunique() == 1
+
+
+def test_session_filter():
+    import pandas as pd
+    from goldbot.strategy import in_session
+    p = StrategyParams(session_start_utc=7, session_end_utc=17)
+    assert in_session(pd.Timestamp("2026-01-05 08:00", tz="UTC"), p)
+    assert not in_session(pd.Timestamp("2026-01-05 21:00", tz="UTC"), p)
+    assert in_session(pd.Timestamp("2026-01-05 03:00-05:00"), p)  # = 08:00 UTC
+    wrap = StrategyParams(session_start_utc=22, session_end_utc=3)
+    assert in_session(pd.Timestamp("2026-01-05 23:00", tz="UTC"), wrap)
+
+
+def test_variants_only_restrict_trades(df):
+    base = run_backtest(df, big_settings(), StrategyParams()).stats["trades"]
+    for kw in ({"daily_trend_days": 20}, {"session_start_utc": 7, "session_end_utc": 17}):
+        assert run_backtest(df, big_settings(), StrategyParams(**kw)).stats["trades"] <= base
+
+
+def test_time_stop_exits(df):
+    r = run_backtest(df, big_settings(), StrategyParams(max_hold_bars=6))
+    assert any(t.reason == "time_stop" for t in r.trades)

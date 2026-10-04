@@ -46,6 +46,11 @@ class StrategyParams:
     news_veto_threshold: float = 0.4     # |sentiment| above this vetoes opposite trades
     adx_period: int = 14
     adx_min: float = 18.0                # no trend trades in chop
+    # research variants (0 / -1 = off). See docs/RESEARCH.md section 3.
+    daily_trend_days: int = 0            # only trade in direction of N-day return (multi-timeframe)
+    session_start_utc: int = -1          # allow new entries only between these UTC hours
+    session_end_utc: int = -1
+    max_hold_bars: int = 0               # exit trades not yet +0.5 ATR after N bars
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "StrategyParams":

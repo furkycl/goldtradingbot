@@ -16,6 +16,7 @@ import pandas as pd
 
 from .backtest import run_backtest
 from .config import Settings, StrategyParams
+from .strategy import warmup_bars
 
 SEARCH_SPACE = {
     "ema_fast": [10, 20, 30, 50],
@@ -26,6 +27,8 @@ SEARCH_SPACE = {
     "trail_atr_mult": [2.0, 2.5, 3.0, 3.5],
     "adx_min": [0.0, 15.0, 18.0, 22.0, 25.0],
 }
+# Variant dimensions are added to SEARCH_SPACE only after scripts/compare_variants.py
+# shows they help out-of-sample under 1x AND 2x costs (see reports/variants-*.md).
 
 GUARDRAILS = {"max_drawdown_pct": 25.0, "min_trades": 8, "min_profit_factor": 1.1}
 MIN_IMPROVEMENT = 0.10   # median OOS score must improve by this much
@@ -39,7 +42,8 @@ def score(stats: dict) -> float:
     return stats["return_pct"] / dd * min(1.0, stats["trades"] / 20)
 
 
-def folds(df: pd.DataFrame, n: int = 4, train_frac: float = 0.6) -> list[tuple[pd.DataFrame, pd.DataFrame]]:
+def folds(df: pd.DataFrame, n: int = 4, train_frac: float = 0.6,
+          warm: int = 300) -> list[tuple[pd.DataFrame, pd.DataFrame]]:
     """Anchored walk-forward: train on [0, k), test on [k, k+step)."""
     size = len(df)
     first_test = int(size * train_frac)
@@ -47,14 +51,13 @@ def folds(df: pd.DataFrame, n: int = 4, train_frac: float = 0.6) -> list[tuple[p
     out = []
     for k in range(n):
         a, b = first_test + k * step, first_test + (k + 1) * step
-        warm = 300  # give indicators history in the test slice
         out.append((df.iloc[:a], df.iloc[max(0, a - warm):b]))
     return out
 
 
 def evaluate(df: pd.DataFrame, settings: Settings, params: StrategyParams, n_folds: int = 4) -> dict:
     res = []
-    for _, test in folds(df, n_folds):
+    for _, test in folds(df, n_folds, warm=max(300, warmup_bars(params) + 50)):
         st = run_backtest(test, settings, params).stats
         res.append(st)
     scores = [score(r) for r in res]
@@ -62,7 +65,7 @@ def evaluate(df: pd.DataFrame, settings: Settings, params: StrategyParams, n_fol
         "median_score": round(median(scores), 4),
         "worst_dd": max(r["max_drawdown_pct"] for r in res),
         "total_trades": sum(r["trades"] for r in res),
-        "median_pf": median(r["profit_factor"] for r in res),
+        "median_pf": round(median(r["profit_factor"] for r in res), 2),
         "folds": res,
     }
 
