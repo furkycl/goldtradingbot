@@ -23,6 +23,14 @@ from goldbot.config import ROOT, load_params, load_settings, save_params  # noqa
 from goldbot.optimize import search  # noqa: E402
 
 
+def _summary(ev: dict) -> dict:
+    out = {k: v for k, v in ev.items() if k != "folds"}
+    out["fold_return_pct"] = [f["return_pct"] for f in ev["folds"]]
+    out["fold_max_dd_pct"] = [f["max_drawdown_pct"] for f in ev["folds"]]
+    out["fold_win_rate_pct"] = [f["win_rate_pct"] for f in ev["folds"]]
+    return out
+
+
 def main() -> int:
     settings, params = load_settings(), load_params()
     settings.starting_equity = 10_000  # optimise on a size where min-lot rounding doesn't dominate
@@ -41,10 +49,10 @@ def main() -> int:
     report = {
         "date": stamp, "data": source, "bars": len(df), "accepted": result["accepted"],
         "reason": result["reason"],
-        "baseline_oos": {k: v for k, v in result["baseline"].items() if k != "folds"},
+        "baseline_oos": _summary(result["baseline"]),
     }
     if result["accepted"]:
-        report["candidate_oos"] = {k: v for k, v in result["candidate"].items() if k != "folds"}
+        report["candidate_oos"] = _summary(result["candidate"])
         report["old_params"] = params.to_dict()
         report["new_params"] = result["params"].to_dict()
         save_params(result["params"], header=f"auto-tuned {stamp}: {result['reason']}")
