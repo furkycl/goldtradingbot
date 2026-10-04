@@ -76,7 +76,11 @@ class PaperBroker(Broker):
             return OrderResult(False, message="refused: no stop loss")
         bid, ask = self.price()
         entry = ask if side > 0 else bid
-        p = Position(uuid.uuid4().hex[:8], side, lots, entry, stop, take_profit)
+        if self.feed is not None and len(self.feed):
+            opened = pd.Timestamp(self.feed.index[-1]).isoformat()
+        else:
+            opened = pd.Timestamp.now(tz="UTC").isoformat()
+        p = Position(uuid.uuid4().hex[:8], side, lots, entry, stop, take_profit, opened)
         self._pos[p.id] = p
         self._save()
         return OrderResult(True, p)

@@ -72,7 +72,7 @@ class Engine:
 
         positions = self.broker.positions()
         for pos in positions:
-            self._manage(pos, row)
+            self._manage(pos, row, df)
         positions = self.broker.positions()
 
         ok, why = self.rm.can_trade(len(positions))
@@ -106,7 +106,7 @@ class Engine:
         notify(f"order rejected: {res.message}")
         return res.message
 
-    def _manage(self, pos, row) -> None:
+    def _manage(self, pos, row, df=None) -> None:
         bid, ask = self.broker.price()
         px = bid if pos.side > 0 else ask
         # client-side stop enforcement (backup for spot exchanges)
@@ -114,6 +114,14 @@ class Engine:
             self.broker.close(pos.id)
             notify(f"STOP hit {pos.id} @ {px:.2f}")
             return
+        # time stop: same rule as the backtest
+        if self.p.max_hold_bars and pos.opened_at and df is not None and pos.entry:
+            import pandas as pd
+            held = int((df.index > pd.Timestamp(pos.opened_at)).sum())
+            if held >= self.p.max_hold_bars and pos.side * (px - pos.entry) < 0.5 * float(row["atr"]):
+                self.broker.close(pos.id)
+                notify(f"TIME STOP {pos.id} after {held} bars @ {px:.2f}")
+                return
         risk = abs(pos.entry - pos.stop) if pos.entry else 0
         if risk and pos.side * (px - pos.entry) >= risk:
             new_stop = round(px - pos.side * self.p.trail_atr_mult * float(row["atr"]), 2)

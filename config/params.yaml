@@ -11,3 +11,7 @@ news_weight: 0.5
 news_veto_threshold: 0.4
 adx_period: 14
 adx_min: 0.0
+daily_trend_days: 0
+session_start_utc: -1
+session_end_utc: -1
+max_hold_bars: 12        # adopted 2026-10-04: robust under 1x/2x costs (reports/variants-2026-10-04.md)

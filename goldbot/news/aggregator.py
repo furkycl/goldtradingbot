@@ -30,6 +30,8 @@ DEFAULT_RSS = [
     "https://feeds.content.dowjones.io/public/rss/mw_topstories",
     "https://www.bloomberght.com/rss",
 ]
+# Some official sources (e.g. BLS) reject requests without an identifying agent.
+USER_AGENT = "goldbot/0.1 (+https://github.com/furkycl/goldtradingbot)"
 FF_CALENDAR = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 
 
@@ -78,7 +80,7 @@ class NewsAggregator:
         n = 0
         for url in self.rss:
             try:
-                feed = feedparser.parse(url)
+                feed = feedparser.parse(url, agent=USER_AGENT)
             except Exception as exc:  # network errors must never kill the bot
                 log.warning("rss %s failed: %s", url, exc)
                 continue
@@ -120,7 +122,7 @@ class NewsAggregator:
         now = datetime.now(timezone.utc)
         for url in self.rss:
             try:
-                f = feedparser.parse(url)
+                f = feedparser.parse(url, agent=USER_AGENT)
             except Exception as exc:
                 out.append((url, f"ERROR {exc}", "-")); continue
             dates = [datetime(*e.published_parsed[:6], tzinfo=timezone.utc)
@@ -137,7 +139,7 @@ class NewsAggregator:
         import requests
 
         try:
-            rows = requests.get(FF_CALENDAR, timeout=10).json()
+            rows = requests.get(FF_CALENDAR, timeout=10, headers={"User-Agent": USER_AGENT}).json()
         except Exception as exc:
             log.warning("calendar fetch failed: %s", exc)
             return 0
