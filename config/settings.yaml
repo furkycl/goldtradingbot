@@ -1,0 +1,40 @@
+# Human-owned settings. The self-improvement loop never edits this file.
+
+mode: paper            # paper | live  (live ALSO needs env GOLDBOT_LIVE_CONFIRM, see README)
+broker: paper          # paper | mt5 | ccxt
+symbol: XAUUSD
+starting_equity: 100
+
+# cost assumptions for paper/backtest (set to your broker's real values)
+commission_per_lot: 7.0   # USD round turn per 100 oz lot
+spread: 0.30              # USD per oz
+contract_size: 100        # oz per lot (MT5/ccxt adapters overwrite from the broker)
+min_lot: 0.01
+lot_step: 0.01
+
+poll_seconds: 30
+news_blackout_minutes: 30
+
+risk:
+  risk_per_trade_pct: 1.0
+  max_daily_loss_pct: 3.0
+  max_drawdown_pct: 20.0
+  max_leverage: 10.0       # SPK limit for Turkish residents; capped at 10 in code
+  max_open_positions: 1
+  max_trades_per_day: 4
+
+news:
+  rss:
+    - https://www.fxstreet.com/rss/news
+    - https://www.kitco.com/rss/KitcoNews.xml
+    - https://www.investing.com/rss/news_11.rss
+    - https://www.forexlive.com/feed/news
+    - https://feeds.marketwatch.com/marketwatch/marketpulse/
+    - https://www.federalreserve.gov/feeds/press_all.xml
+  telegram:
+    session: goldbot
+    channels: []           # e.g. ["@channelname"] — public channels you trust
+
+broker_options:
+  symbol: XAUUSD           # MT5 symbol name at your broker (e.g. XAUUSD, GOLD) or PAXG/USDT for ccxt
+  magic: 770077

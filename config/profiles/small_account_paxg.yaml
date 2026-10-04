@@ -1,0 +1,36 @@
+# Small-account profile: tokenised gold (PAXG/USDT) spot, long-only, no leverage.
+# Use: cp config/profiles/small_account_paxg.yaml config/settings.yaml
+# Before going live, verify the exchange is permitted for Turkish residents
+# (SPK crypto-asset service provider list) and check its real fees.
+
+mode: paper
+broker: ccxt
+symbol: PAXGUSDT
+starting_equity: 100
+long_only: true
+
+commission_per_lot: 8.0   # ~0.1% per side x 2 on a ~$4,000 token; adjust to the real price/fee
+spread: 1.0               # USD per token, typical for PAXG books; check live
+contract_size: 1          # 1 token ~ 1 troy oz
+min_lot: 0.0001
+lot_step: 0.0001
+
+poll_seconds: 30
+news_blackout_minutes: 30
+
+risk:
+  risk_per_trade_pct: 1.0
+  max_daily_loss_pct: 3.0
+  max_drawdown_pct: 20.0
+  max_leverage: 1.0        # spot: no leverage
+  max_open_positions: 1
+  max_trades_per_day: 4
+
+news:
+  telegram:
+    session: goldbot
+    channels: []
+
+broker_options:
+  exchange: ""             # REQUIRED: ccxt id of an SPK-permitted exchange that lists the symbol
+  symbol: PAXG/USDT

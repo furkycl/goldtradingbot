@@ -1,0 +1,73 @@
+name: Self-improve
+
+# Weekly walk-forward re-tuning. Opens a branch + PR with new params only if
+# they beat the current ones out-of-sample and pass guardrails, runs the full
+# test suite on that tree, then squash-merges automatically.
+#
+# One-time repo setup: Settings -> Actions -> General -> Workflow permissions:
+#   "Read and write permissions" + "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  schedule:
+    - cron: "17 3 * * 6"   # Saturdays 03:17 UTC (market closed)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: self-improve
+  cancel-in-progress: false
+
+jobs:
+  improve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+
+      - name: Search for better parameters
+        id: search
+        run: |
+          set +e
+          python scripts/self_improve.py
+          code=$?
+          set -e
+          if [ "$code" = "0" ]; then echo "changed=true" >> "$GITHUB_OUTPUT";
+          elif [ "$code" = "78" ]; then echo "changed=false" >> "$GITHUB_OUTPUT";
+          else exit $code; fi
+
+      - name: Verify candidate tree (tests + diff guard)
+        if: steps.search.outputs.changed == 'true'
+        run: |
+          pytest -q
+          python -m goldbot backtest --equity 10000
+          git add -A config/params.yaml reports/
+          python scripts/check_auto_diff.py HEAD --staged
+
+      - name: Branch, commit, PR, merge
+        if: steps.search.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BR="auto/tune-$(date -u +%Y%m%d-%H%M)"
+          git config user.name  "goldbot-self-improve"
+          git config user.email "goldbot-self-improve@users.noreply.github.com"
+          git checkout -b "$BR"
+          git commit -m "auto: re-tune strategy params ($(date -u +%F))" -m "$(cat reports/self-improve-*.json | tail -c 3000)"
+          git push -u origin "$BR"
+          gh pr create --base main --head "$BR" \
+            --title "auto: re-tune strategy params $(date -u +%F)" \
+            --body "Walk-forward OOS improvement passed guardrails. See reports/ for details. Tests ran in the self-improve job."
+          gh pr merge "$BR" --squash --delete-branch
+
+      - name: Record no-change report
+        if: steps.search.outputs.changed == 'false'
+        run: ls reports/ && tail -n 30 reports/self-improve-*.json || true

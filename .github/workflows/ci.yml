@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - run: pytest -q
+      - name: Backtest smoke test (synthetic data)
+        run: python -m goldbot backtest --equity 10000
+      - name: Auto branches may only change params and reports
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'auto/')
+        run: python scripts/check_auto_diff.py origin/${{ github.base_ref }}

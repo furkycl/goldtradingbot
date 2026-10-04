@@ -1,0 +1,14 @@
+# Strategy parameters. The self-improvement workflow may propose changes to
+# this file via pull request; they merge only if tests + guardrails pass.
+timeframe: 1h
+ema_fast: 20
+ema_slow: 100
+breakout_lookback: 24
+atr_period: 14
+atr_stop_mult: 2.0
+take_profit_r: 2.0
+trail_atr_mult: 2.5
+news_weight: 0.5
+news_veto_threshold: 0.4
+adx_period: 14
+adx_min: 18.0

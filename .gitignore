@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+*.session
+*.session-journal
+state/
+*.log
+.pytest_cache/
+data/*.csv
