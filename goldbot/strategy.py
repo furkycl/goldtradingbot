@@ -38,11 +38,31 @@ def prepare(df: pd.DataFrame, p: StrategyParams) -> pd.DataFrame:
     out["atr"] = atr(out, p.atr_period)
     out["adx"] = adx(out, p.adx_period)
     out["dc_up"], out["dc_low"] = donchian(out, p.breakout_lookback)
+    out["daily_trend"] = daily_trend(out["close"], p.daily_trend_days) if p.daily_trend_days else 0.0
     return out
 
 
+def daily_trend(close: pd.Series, days: int) -> pd.Series:
+    """Sign of the N-day return using ONLY completed prior days (no lookahead)."""
+    daily = close.resample("1D").last().dropna()
+    trend = (daily / daily.shift(days) - 1).shift(1)          # known at the start of each day
+    trend.index = trend.index.normalize()
+    keys = close.index.normalize()
+    return pd.Series(trend.reindex(keys).to_numpy(), index=close.index).fillna(0.0)
+
+
+def in_session(ts: pd.Timestamp, p: StrategyParams) -> bool:
+    if p.session_start_utc < 0 or p.session_end_utc < 0:
+        return True
+    h = ts.tz_convert("UTC").hour if ts.tzinfo else ts.hour
+    if p.session_start_utc <= p.session_end_utc:
+        return p.session_start_utc <= h < p.session_end_utc
+    return h >= p.session_start_utc or h < p.session_end_utc
+
+
 def warmup_bars(p: StrategyParams) -> int:
-    return max(p.ema_slow, p.breakout_lookback, p.atr_period, p.adx_period) + 5
+    return max(p.ema_slow, p.breakout_lookback, p.atr_period, p.adx_period,
+               p.daily_trend_days * 23) + 5
 
 
 def signal_at(row: pd.Series, p: StrategyParams, news_sentiment: float = 0.0) -> Signal:
@@ -58,6 +78,10 @@ def signal_at(row: pd.Series, p: StrategyParams, news_sentiment: float = 0.0) ->
         side = -1
     if side == 0:
         return none
+    if p.daily_trend_days and float(row.get("daily_trend", 0.0)) * side <= 0:
+        return Signal(0, close, 0, 0, a, "against daily trend")
+    if not in_session(row.name, p):
+        return Signal(0, close, 0, 0, a, "outside session")
 
     weighted = news_sentiment * p.news_weight
     if abs(news_sentiment) >= p.news_veto_threshold and (weighted * side) < 0:

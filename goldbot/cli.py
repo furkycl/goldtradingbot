@@ -3,6 +3,7 @@
   backtest   [--csv FILE | --yf] [--equity N]   run a backtest
   optimize   [--csv FILE | --yf] [--trials N]   walk-forward search (prints result)
   news                                          print current headlines + sentiment
+  probe-feeds                                   check RSS feeds are alive and fresh
   run                                           start paper (or live, if confirmed) trading
 """
 from __future__ import annotations
@@ -33,6 +34,7 @@ def main(argv=None) -> None:
         sp.add_argument("--equity", type=float)
         sp.add_argument("--trials", type=int, default=40)
     sub.add_parser("news")
+    sub.add_parser("probe-feeds", help="check every RSS feed is reachable and fresh")
     sub.add_parser("run")
     args = ap.parse_args(argv)
 
@@ -60,6 +62,10 @@ def main(argv=None) -> None:
         for it in sorted(agg.items.values(), key=lambda i: i.ts)[-25:]:
             print(f"{it.ts:%m-%d %H:%M} {it.score:+.2f} {it.text[:110]}")
         print(f"\naggregate sentiment: {agg.sentiment():+.2f} | blackout now: {agg.in_blackout()}")
+    elif args.cmd == "probe-feeds":
+        from .news import NewsAggregator
+        for url, status, age in NewsAggregator(rss=settings.news.get("rss")).probe():
+            print(f"{status:<22} newest {age:>8}  {url}")
     elif args.cmd == "run":
         from .engine import Engine
         Engine(settings, params).run()

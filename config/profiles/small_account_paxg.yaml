@@ -1,7 +1,10 @@
 # Small-account profile: tokenised gold (PAXG/USDT) spot, long-only, no leverage.
 # Use: cp config/profiles/small_account_paxg.yaml config/settings.yaml
-# Before going live, verify the exchange is permitted for Turkish residents
-# (SPK crypto-asset service provider list) and check its real fees.
+# Before going live, verify the exchange is on SPK's crypto-asset provider list
+# and check its real fees.
+# Findings 2026-10-04 (docs/RESEARCH.md §2): BtcTurk (ccxt "btcturk") lists NO
+# PAXG/XAUT pair; Paribu lists XAUT/TL but has no ccxt module (needs a custom
+# client). Re-check listings before using this profile live.
 
 mode: paper
 broker: ccxt

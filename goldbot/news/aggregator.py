@@ -14,14 +14,21 @@ from .sentiment import aggregate, is_relevant, score_headline
 
 log = logging.getLogger(__name__)
 
-# Public, free feeds. Edit config/settings.yaml -> news.rss to change.
+# Public, free feeds — each verified to return a current RSS/Atom feed on
+# 2026-10-04 (see docs/RESEARCH.md §4). Check yours with: python -m goldbot probe-feeds
 DEFAULT_RSS = [
+    "https://www.financialjuice.com/feed.ashx?xy=rss",          # fastest free squawk-style headlines
+    "https://investinglive.com/feed/news",                      # ex-ForexLive, data prints at release
+    "https://www.investing.com/rss/news_95.rss",                # economic indicators
     "https://www.fxstreet.com/rss/news",
-    "https://www.kitco.com/rss/KitcoNews.xml",
-    "https://www.investing.com/rss/news_11.rss",          # commodities
-    "https://www.forexlive.com/feed/news",
-    "https://feeds.marketwatch.com/marketwatch/marketpulse/",
+    "https://www.investing.com/rss/news_11.rss",
+    "https://www.federalreserve.gov/feeds/press_monetary.xml",  # FOMC statements
     "https://www.federalreserve.gov/feeds/press_all.xml",
+    "https://www.ecb.europa.eu/rss/press.html",
+    "https://www.bls.gov/feed/cpi.rss",
+    "https://www.bls.gov/feed/empsit.rss",                      # jobs report (NFP)
+    "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+    "https://www.bloomberght.com/rss",
 ]
 FF_CALENDAR = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 
@@ -84,6 +91,47 @@ class NewsAggregator:
                     n += 1
         return n
 
+    def poll_finnhub(self) -> int:
+        """Optional: Finnhub general news (free key, ~60 calls/min, non-commercial)."""
+        import os
+        import requests
+
+        key = os.environ.get("FINNHUB_KEY")
+        if not key:
+            return 0
+        try:
+            rows = requests.get("https://finnhub.io/api/v1/news",
+                                params={"category": "general", "token": key}, timeout=10).json()
+        except Exception as exc:
+            log.warning("finnhub failed: %s", exc)
+            return 0
+        n = 0
+        for r in rows[:50]:
+            ts = datetime.fromtimestamp(r.get("datetime", 0), tz=timezone.utc)
+            if self.add(r.get("headline", ""), f"finnhub:{r.get('source', '')}", ts):
+                n += 1
+        return n
+
+    def probe(self) -> list[tuple[str, str, str]]:
+        """(url, status, newest entry age) for every configured feed."""
+        import feedparser
+
+        out = []
+        now = datetime.now(timezone.utc)
+        for url in self.rss:
+            try:
+                f = feedparser.parse(url)
+            except Exception as exc:
+                out.append((url, f"ERROR {exc}", "-")); continue
+            dates = [datetime(*e.published_parsed[:6], tzinfo=timezone.utc)
+                     for e in f.entries if getattr(e, "published_parsed", None)]
+            if not f.entries:
+                out.append((url, f"EMPTY (http {getattr(f, 'status', '?')})", "-"))
+            else:
+                age = now - max(dates) if dates else None
+                out.append((url, "ok", f"{age.total_seconds() / 3600:.1f}h" if age else "no dates"))
+        return out
+
     def poll_calendar(self) -> int:
         """High-impact USD events (CPI, NFP, FOMC...) -> entry blackout windows."""
         import requests
@@ -138,6 +186,7 @@ class NewsAggregator:
         last_cal = 0.0
         while not stop.is_set():
             self.poll_rss()
+            self.poll_finnhub()
             if time.time() - last_cal > 3600:
                 self.poll_calendar()
                 last_cal = time.time()

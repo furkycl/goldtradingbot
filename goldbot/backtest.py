@@ -32,6 +32,7 @@ class Trade:
     exit: float | None = None
     pnl: float = 0.0
     reason: str = ""
+    entry_bar: int = 0
 
 
 @dataclass
@@ -115,7 +116,7 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
             tp = entry + sig.side * stop_dist * params.take_profit_r
             lots = rm.size_position(cash, entry, stop)
             if lots > 0:
-                pos = Trade(sig.side, lots, ts, entry, stop, tp, stop_dist)
+                pos = Trade(sig.side, lots, ts, entry, stop, tp, stop_dist, entry_bar=i)
                 rm.on_trade_opened()
             else:
                 skipped += 1
@@ -130,6 +131,10 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
                 pos = None
             elif hit_tp:
                 cash += close_pos(pos, pos.take_profit, ts, "take_profit")
+                pos = None
+            elif (params.max_hold_bars and i - pos.entry_bar >= params.max_hold_bars
+                  and pos.side * (c[i] - pos.entry) < 0.5 * atr_v[i]):
+                cash += close_pos(pos, c[i], ts, "time_stop")
                 pos = None
             else:
                 # trailing stop once 1R in profit

@@ -1,0 +1,59 @@
+name: Research
+
+# Monthly (and on demand): backtest research-backed strategy variants on real
+# data under 1x and 2x costs, and publish the comparison to reports/.
+# Only reports/ may change (enforced by check_auto_diff.py).
+
+on:
+  schedule:
+    - cron: "41 4 1 * *"   # 1st of each month, 04:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: research
+  cancel-in-progress: false
+
+jobs:
+  variants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - run: pytest -q
+      - name: Probe news feeds from a real host
+        run: |
+          mkdir -p reports
+          python -m goldbot probe-feeds | tee "reports/feeds-$(date -u +%F).txt" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Compare variants on real data
+        run: python scripts/compare_variants.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Publish report (branch -> PR -> merge, or fast-forward)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git add -A reports/
+          python scripts/check_auto_diff.py HEAD --staged
+          if git diff --cached --quiet; then echo "no report changes"; exit 0; fi
+          BR="auto/research-$(date -u +%Y%m%d-%H%M)"
+          git config user.name  "goldbot-research"
+          git config user.email "goldbot-research@users.noreply.github.com"
+          git checkout -b "$BR"
+          git commit -m "auto: strategy variant comparison ($(date -u +%F))"
+          git push -u origin "$BR"
+          if gh pr create --base main --head "$BR" --title "auto: variant comparison $(date -u +%F)" \
+               --body "Monthly research backtest. Reports only."; then
+            gh pr merge "$BR" --squash --delete-branch
+          else
+            git fetch origin main && git rebase origin/main
+            git push origin "HEAD:main"
+            git push origin --delete "$BR"
+          fi
