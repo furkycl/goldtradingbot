@@ -212,3 +212,15 @@ def test_variants_only_restrict_trades(df):
 def test_time_stop_exits(df):
     r = run_backtest(df, big_settings(), StrategyParams(max_hold_bars=6))
     assert any(t.reason == "time_stop" for t in r.trades)
+
+
+def test_engine_time_stop_matches_backtest_rule(df, tmp_path):
+    s = big_settings()
+    p = StrategyParams(adx_min=0, max_hold_bars=6)
+    broker = PaperBroker(s, feed=df.iloc[:400], state_path=tmp_path / "p.json")
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    for i in range(400, 1400):
+        broker.feed = df.iloc[: i + 1]
+        eng.step()
+    assert any(c["reason"] == "manual" for c in broker.closed)  # engine-initiated time-stop closes
+    assert all(pos.opened_at for pos in broker.positions())

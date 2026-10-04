@@ -26,6 +26,10 @@ SEARCH_SPACE = {
     "take_profit_r": [1.5, 2.0, 2.5, 3.0, 4.0],
     "trail_atr_mult": [2.0, 2.5, 3.0, 3.5],
     "adx_min": [0.0, 15.0, 18.0, 22.0, 25.0],
+    # validated in reports/variants-2026-10-04.md
+    "max_hold_bars": [0, 12, 24, 48],
+    # improves PF and halves drawdown but cuts trade count; let the loop decide
+    "daily_trend_days": [0, 20, 60, 120],
 }
 # Variant dimensions are added to SEARCH_SPACE only after scripts/compare_variants.py
 # shows they help out-of-sample under 1x AND 2x costs (see reports/variants-*.md).

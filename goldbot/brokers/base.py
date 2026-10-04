@@ -14,6 +14,7 @@ class Position:
     entry: float
     stop: float
     take_profit: float
+    opened_at: str = ""   # ISO UTC time of the entry bar ("" if unknown)
 
 
 @dataclass

@@ -60,7 +60,8 @@ class MT5Broker(Broker):
             if p.magic != self.magic:
                 continue
             side = 1 if p.type == self.mt5.POSITION_TYPE_BUY else -1
-            out.append(Position(str(p.ticket), side, p.volume, p.price_open, p.sl, p.tp))
+            opened = pd.Timestamp(p.time, unit="s", tz="UTC").isoformat()
+            out.append(Position(str(p.ticket), side, p.volume, p.price_open, p.sl, p.tp, opened))
         return out
 
     def open(self, side: int, lots: float, stop: float, take_profit: float) -> OrderResult:
