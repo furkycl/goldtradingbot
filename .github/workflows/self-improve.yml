@@ -24,10 +24,10 @@ jobs:
   improve:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -61,12 +61,19 @@ jobs:
           git config user.name  "goldbot-self-improve"
           git config user.email "goldbot-self-improve@users.noreply.github.com"
           git checkout -b "$BR"
-          git commit -m "auto: re-tune strategy params ($(date -u +%F))" -m "$(cat reports/self-improve-*.json | tail -c 3000)"
+          git commit -m "auto: re-tune strategy params ($(date -u +%F))" -m "$(jq -r .reason reports/self-improve-$(date -u +%F).json)"
           git push -u origin "$BR"
-          gh pr create --base main --head "$BR" \
-            --title "auto: re-tune strategy params $(date -u +%F)" \
-            --body "Walk-forward OOS improvement passed guardrails. See reports/ for details. Tests ran in the self-improve job."
-          gh pr merge "$BR" --squash --delete-branch
+          if gh pr create --base main --head "$BR" \
+               --title "auto: re-tune strategy params $(date -u +%F)" \
+               --body "Walk-forward OOS improvement passed guardrails. See reports/ for details. Tests ran in the self-improve job."; then
+            gh pr merge "$BR" --squash --delete-branch
+          else
+            echo "::warning::Actions may not create PRs in this repo; fast-forwarding main from the tested branch instead"
+            git fetch origin main
+            git rebase origin/main
+            git push origin "HEAD:main"
+            git push origin --delete "$BR"
+          fi
 
       - name: Record no-change report
         if: steps.search.outputs.changed == 'false'
