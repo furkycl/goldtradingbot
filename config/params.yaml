@@ -1,12 +1,12 @@
-# auto-tuned 2026-10-04: OOS median score 0.5613 -> 0.8485
+# auto-tuned 2026-10-04: OOS median score 0.8778 -> 1.6378
 timeframe: 1h
 ema_fast: 50
 ema_slow: 150
-breakout_lookback: 24
+breakout_lookback: 12
 atr_period: 14
-atr_stop_mult: 2.5
+atr_stop_mult: 3.0
 take_profit_r: 2.0
-trail_atr_mult: 2.0
+trail_atr_mult: 3.0
 news_weight: 0.5
 news_veto_threshold: 0.4
 adx_period: 14
@@ -14,4 +14,4 @@ adx_min: 0.0
 daily_trend_days: 0
 session_start_utc: -1
 session_end_utc: -1
-max_hold_bars: 12        # adopted 2026-10-04: robust under 1x/2x costs (reports/variants-2026-10-04.md)
+max_hold_bars: 12
