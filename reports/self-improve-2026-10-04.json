@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-04",
+  "data": "yfinance GC=F",
+  "bars": 13715,
+  "accepted": true,
+  "reason": "OOS median score 0.5613 -> 0.8485",
+  "baseline_oos": {
+    "median_score": 0.5613,
+    "worst_dd": 5.95,
+    "total_trades": 129,
+    "median_pf": 1.23
+  },
+  "candidate_oos": {
+    "median_score": 0.8485,
+    "worst_dd": 6.12,
+    "total_trades": 109,
+    "median_pf": 1.28
+  },
+  "old_params": {
+    "timeframe": "1h",
+    "ema_fast": 20,
+    "ema_slow": 100,
+    "breakout_lookback": 24,
+    "atr_period": 14,
+    "atr_stop_mult": 2.0,
+    "take_profit_r": 2.0,
+    "trail_atr_mult": 2.5,
+    "news_weight": 0.5,
+    "news_veto_threshold": 0.4,
+    "adx_period": 14,
+    "adx_min": 18.0
+  },
+  "new_params": {
+    "timeframe": "1h",
+    "ema_fast": 50,
+    "ema_slow": 150,
+    "breakout_lookback": 24,
+    "atr_period": 14,
+    "atr_stop_mult": 2.5,
+    "take_profit_r": 2.0,
+    "trail_atr_mult": 2.0,
+    "news_weight": 0.5,
+    "news_veto_threshold": 0.4,
+    "adx_period": 14,
+    "adx_min": 0.0
+  }
+}
