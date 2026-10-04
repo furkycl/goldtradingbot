@@ -79,7 +79,8 @@ Not: "Sinyal" satan Telegram kanallarının çoğu doğrulanamaz. Bot bu kanalla
 2. Mevcut parametrelerin etrafında 60 aday dener (sadece ilk %60'lık eğitim verisinde).
 3. En iyi adayları **görmedikleri** 4 walk-forward dilimde test eder.
 4. Kabul şartları: medyan örneklem dışı skorda en az 0,10 iyileşme, en kötü düşüş ≤ %25, en az 8 işlem, kâr faktörü ≥ 1,1.
-5. Kabul edilirse `auto/tune-YYYYMMDD-HHMM` branch'i açar, testleri çalıştırır, commit atar, PR açar ve squash-merge eder. Rapor `reports/` altına yazılır.
+5. **Mühürlü test verisi:** En yeni %15'lik veri arama ve seçimde hiç kullanılmaz. Aday bu bölümde mevcut parametrelerden kötü sonuç verirse reddedilir. Böylece aynı veride tekrar tekrar optimizasyon yapmanın getirdiği aşırı uyum sınırlanır.
+6. Kabul edilirse `auto/tune-YYYYMMDD-HHMM` branch'i açar, testleri çalıştırır, commit atar, PR açar ve squash-merge eder. Rapor `reports/` altına yazılır.
 
 Actions'ın PR açma izni kapalıysa döngü, test edilmiş branch'i doğrudan `main`'e alır. Bu ayarı açmak zorunlu değil. İstersen açabilirsin: **Settings → Actions → General → Workflow permissions** → "Read and write permissions" ve "Allow GitHub Actions to create and approve pull requests".
 

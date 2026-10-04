@@ -20,7 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from goldbot import data  # noqa: E402
 from goldbot.config import ROOT, load_params, load_settings, save_params  # noqa: E402
-from goldbot.optimize import search  # noqa: E402
+from goldbot.backtest import run_backtest  # noqa: E402
+from goldbot.optimize import score, search  # noqa: E402
+from goldbot.strategy import warmup_bars  # noqa: E402
+
+HOLDOUT_FRAC = 0.15  # most recent bars; never used for search or selection
 
 
 def _summary(ev: dict) -> dict:
@@ -41,7 +45,22 @@ def main() -> int:
         print(f"data download failed ({exc}); using synthetic data — no params will be changed")
         return 78
     seed = int(datetime.now(timezone.utc).strftime("%Y%m%d"))
-    result = search(df, settings, params, trials=60, seed=seed)
+    cut = int(len(df) * (1 - HOLDOUT_FRAC))
+    research_df = df.iloc[:cut]
+    result = search(research_df, settings, params, trials=60, seed=seed)
+
+    def holdout(p):
+        warm = max(300, warmup_bars(p) + 50)
+        st = run_backtest(df.iloc[cut - warm:], settings, p).stats
+        return {**st, "score": round(score(st), 4)}
+
+    hold_base = holdout(params)
+    if result["accepted"]:
+        hold_cand = holdout(result["params"])
+        if hold_cand["score"] < hold_base["score"]:
+            result["accepted"] = False
+            result["reason"] = (f"rejected on sealed holdout: {hold_base['score']} -> {hold_cand['score']} "
+                                f"(walk-forward said: {result['reason']})")
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     reports = ROOT / "reports"
@@ -50,9 +69,11 @@ def main() -> int:
         "date": stamp, "data": source, "bars": len(df), "accepted": result["accepted"],
         "reason": result["reason"],
         "baseline_oos": _summary(result["baseline"]),
+        "holdout": {"from": str(df.index[cut]), "to": str(df.index[-1]), "baseline": hold_base},
     }
     if result["accepted"]:
         report["candidate_oos"] = _summary(result["candidate"])
+        report["holdout"]["candidate"] = hold_cand
         report["old_params"] = params.to_dict()
         report["new_params"] = result["params"].to_dict()
         save_params(result["params"], header=f"auto-tuned {stamp}: {result['reason']}")
