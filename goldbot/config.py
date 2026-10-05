@@ -57,6 +57,13 @@ class RiskSettings:
     # trade's risk (1R). Validation 2026-10-05: edge survives ~0.01R (MT5 CFD),
     # mostly gone at 0.10R (VIOP), negative at 0.20R+ (token spot).
     max_cost_in_r: float = 0.05
+    # --- equity ladder (human-owned). trading_cap: equity above this is NOT
+    # risked by the bot (sweep it to an unlevered core holding; the bot notifies).
+    # risk_ladder: [[equity_from, risk_pct], ...] overrides risk_per_trade_pct by
+    # account size, e.g. [[0, 2.0], [1000, 1.0], [5000, 0.5]]. [] = flat.
+    trading_cap: float = 0.0
+    risk_ladder: list = field(default_factory=list)
+    sweep_min: float = 50.0              # notify when excess above the cap exceeds this
 
 
 @dataclass
@@ -93,6 +100,11 @@ class StrategyParams:
     overnight_start_utc: int = 22        # Asian-session long (Blose & Gondhalekar 2014)
     overnight_bars: int = 9              # hard exit after N bars (before London/NY)
     risk_vol_scaling: bool = False       # scale risk% by median ATR / current ATR (0.5-1.5x)
+    # --- confluence ("quality") score in [0,1] from trend, daily trend, news,
+    # session, volatility regime, stretch and family agreement. Tiers map the
+    # score to a risk multiplier: [[min_score, mult], ...] highest first. [] = off.
+    confluence_tiers: list = field(default_factory=list)
+    max_entry_stretch_atr: float = 0.0   # skip entries more than X ATR from the fast EMA (0 = off)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "StrategyParams":

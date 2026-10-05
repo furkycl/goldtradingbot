@@ -105,13 +105,29 @@ class RiskManager:
         return True, ""
 
     # ----------------------------------------------------------------- sizing
+    def trading_equity(self, equity: float) -> float:
+        """Equity the bot may risk: capped by the ladder's trading_cap."""
+        cap = getattr(self.cfg, "trading_cap", 0.0) or 0.0
+        return min(equity, cap) if cap > 0 else equity
+
+    def risk_pct(self, equity: float) -> float:
+        """risk_per_trade_pct, or the ladder tier for this equity (highest tier <= equity)."""
+        ladder = getattr(self.cfg, "risk_ladder", None) or []
+        pct = self.cfg.risk_per_trade_pct
+        for lo, r in sorted(ladder, key=lambda x: x[0]):
+            if equity >= lo:
+                pct = float(r)
+        return min(pct, 3.0)                                 # hard ceiling, whatever the config says
+
     def size_position(self, equity: float, entry: float, stop: float, scale: float = 1.0) -> float:
-        """Lots such that hitting the stop loses <= risk_per_trade_pct * scale of
-        equity, and notional <= max_leverage * equity. Returns 0 if below the min lot."""
+        """Lots such that hitting the stop loses <= risk_pct(equity) * scale of the
+        TRADING equity (ladder cap), and notional <= max_leverage * trading equity.
+        Returns 0 if below the min lot."""
         stop_dist = abs(entry - stop)
         if stop_dist <= 0 or equity <= 0 or entry <= 0:
             return 0.0
-        risk_usd = equity * self.cfg.risk_per_trade_pct / 100 * max(0.0, min(scale, 1.5))
+        equity = self.trading_equity(equity)
+        risk_usd = equity * self.risk_pct(equity) / 100 * max(0.0, min(scale, 1.5))
         lots_by_risk = risk_usd / (stop_dist * self.contract_size)
         lots_by_leverage = equity * self.cfg.max_leverage / (entry * self.contract_size)
         lots = min(lots_by_risk, lots_by_leverage)

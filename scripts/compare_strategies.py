@@ -40,7 +40,17 @@ def configs(base):
     out["ensemble: breakout+meanrev"] = replace(base, strategies=["breakout", "meanrev"])
     out["ensemble: all + vol-scaled risk"] = replace(base, strategies=ALL, risk_vol_scaling=True)
     out["breakout + vol-scaled risk"] = replace(base, strategies=["breakout"], risk_vol_scaling=True)
+    tiers = [[0.75, 1.5], [0.5, 1.0], [0.0, 0.5]]
+    out["current + confluence tiers"] = replace(base, confluence_tiers=tiers)
+    out["current + no-chase (1.5 ATR)"] = replace(base, max_entry_stretch_atr=1.5)
+    out["current + no-chase (2.5 ATR)"] = replace(base, max_entry_stretch_atr=2.5)
+    out["current + tiers + no-chase 2.5"] = replace(base, confluence_tiers=tiers, max_entry_stretch_atr=2.5)
     return out
+
+
+def multi_position_configs(base):
+    """Same strategies, 1 vs 3 concurrent positions (total open risk capped)."""
+    return {"1 position (current)": 1, "3 positions, 3% total risk": 3}
 
 
 def _cost(s, m):
@@ -65,6 +75,31 @@ def random_benchmark(df, s, p, start, rng):
     rets = np.array(rets)
     return real, {"median": round(float(np.median(rets)), 2), "p95": round(float(np.percentile(rets, 95)), 2),
                   "p_value": round(float((rets >= real.stats["return_pct"]).mean()), 3)}
+
+
+def _confluence_buckets(df, settings, p, tiers, start):
+    """Equal-sized trades, bucketed by the confluence score at entry."""
+    from goldbot.strategy import candidates_at, prepare
+    d = prepare(df, replace(p, confluence_tiers=tiers))
+    r = run_backtest(df, settings, p, trade_from=start)
+    rows = {}
+    for t in r.trades:
+        i = d.index.get_loc(t.entry_time) - 1
+        cands = candidates_at(d.iloc[i], replace(p, confluence_tiers=tiers))
+        sig = next((c for c in cands if c.strategy == t.strategy and c.side == t.side), None)
+        if sig is None or "[conf " not in sig.reason:
+            continue
+        score = float(sig.reason.split("[conf ")[1].split(":")[0])
+        b = "≥0.75" if score >= 0.75 else ("0.5–0.75" if score >= 0.5 else "<0.5")
+        risk_usd = t.initial_risk * t.lots * settings.contract_size
+        rows.setdefault(b, []).append(t.pnl / risk_usd if risk_usd else 0.0)
+    out = {}
+    for b in ("≥0.75", "0.5–0.75", "<0.5"):
+        rs = rows.get(b, [])
+        out[b] = {"n": len(rs), "avg_r": round(float(np.mean(rs)), 3) if rs else None,
+                  "win_rate": round(100 * float(np.mean([x > 0 for x in rs])), 1) if rs else None,
+                  "sum_r": round(float(np.sum(rs)), 1) if rs else None}
+    return out
 
 
 def main() -> int:
@@ -103,9 +138,23 @@ def main() -> int:
         print(f"{label:34} ret {st['return_pct']:7.2f}  pf {st['profit_factor']:5.2f}  p {rb['p_value']:.3f}  "
               f"2x {st2['return_pct']:7.2f}  wf {wf['median_score']:7.3f}  {'ROBUST' if rows[-1]['robust'] else ''}", flush=True)
 
+    # confluence buckets: do higher-quality signals actually earn more per trade?
+    tiers = [[0.75, 1.5], [0.5, 1.0], [0.0, 0.5]]
+    pc = replace(base, strategies=["breakout", "squeeze"], confluence_tiers=tiers)
+    start = df.index[warmup_bars(pc) + 50]
+    buckets = _confluence_buckets(df, settings, replace(base, strategies=["breakout", "squeeze"]), tiers, start)
+    multi = {}
+    for label, n in multi_position_configs(base).items():
+        sm = replace(settings); sm.risk = replace(settings.risk, max_open_positions=n, max_total_risk_pct=3.0 if n > 1 else 2.0,
+                                                  max_trades_per_day=10)
+        pm = replace(base, strategies=["breakout", "squeeze", "meanrev", "overnight", "spike"]) if n > 1 else base
+        st = run_backtest(df, sm, pm, trade_from=df.index[warmup_bars(pm) + 50]).stats
+        multi[label] = {k: st[k] for k in ("return_pct", "max_drawdown_pct", "trades", "profit_factor", "sharpe")}
+
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     out = ROOT / "reports"; out.mkdir(exist_ok=True)
-    (out / f"strategies-{stamp}.json").write_text(json.dumps({"date": stamp, "bars": len(df), "rows": rows}, indent=1, default=str))
+    (out / f"strategies-{stamp}.json").write_text(json.dumps({"date": stamp, "bars": len(df), "rows": rows,
+                                                               "confluence_buckets": buckets, "multi_position": multi}, indent=1, default=str))
     L = [f"# Strategy families — {stamp}", "",
          f"GC=F 1h, {len(df)} bars up to the sealed holdout ({hold.date()}), $10k, real costs. "
          f"Random = same exits/sizing/costs with random entries ({N_RANDOM} runs); p = share of random runs ≥ real. "
@@ -116,6 +165,15 @@ def main() -> int:
         L.append(f"| {r['config']} | {r['return_pct']} | {r['max_dd_pct']} | {r['trades']} | {r['pf']} | {r['win_rate']} | "
                  f"{r['random']['median']} | {r['random']['p_value']} | {r['return_2x_cost']} | {r['pf_2x_cost']} | {r['wf_median_score']} | "
                  f"{r['wf_folds_return']} | {r['long_pnl']} | {r['short_pnl']} | {'✅' if r['robust'] else '—'} |")
+    L += ["", "## Confluence score vs realised R (breakout+squeeze, equal sizing)", "",
+          "Does a higher quality score predict better trades? (If not, tiers only add variance.)", "",
+          "| Score bucket | Trades | Avg R | Win % | Sum R |", "|---|---|---|---|---|"]
+    for k, v in buckets.items():
+        L.append(f"| {k} | {v['n']} | {v['avg_r']} | {v['win_rate']} | {v['sum_r']} |")
+    L += ["", "## 1 vs 3 concurrent positions (all families, total open risk capped)", "",
+          "| Config | Return % | Max DD % | Trades | PF | Sharpe |", "|---|---|---|---|---|---|"]
+    for k, v in multi.items():
+        L.append(f"| {k} | {v['return_pct']} | {v['max_drawdown_pct']} | {v['trades']} | {v['profit_factor']} | {v['sharpe']} |")
     L += ["", "## Per-family attribution inside ensembles", ""]
     for r in rows:
         if len(r["strategies"]) > 1:

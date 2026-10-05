@@ -21,9 +21,18 @@ risk:
   max_daily_loss_pct: 3.0
   max_drawdown_pct: 20.0
   max_leverage: 10.0       # SPK limit for Turkish residents; capped at 10 in code
-  max_open_positions: 1
+  max_open_positions: 1    # >1 = one position per strategy family, never opposite directions
+  max_total_risk_pct: 2.0  # sum of open initial risk, % of equity (only matters when >1 position)
   max_trades_per_day: 4
   max_cost_in_r: 0.05     # refuse live/demo entries on venues that are too expensive
+  # --- equity ladder (your plan: higher risk while small, cap the levered pot later) ---
+  # trading_cap: equity above this is never risked by the bot; it notifies you to
+  # sweep the excess to an unlevered core (gram gold / token). 0 = off.
+  trading_cap: 0
+  # risk_ladder: risk per trade by account size, [[equity_from, risk_pct], ...].
+  # Hard ceiling in code: 3%. Example: [[0, 2.0], [1000, 1.0], [5000, 0.5]]
+  risk_ladder: []
+  sweep_min: 50
 
 news:
   # verified working 2026-10-04; run `python -m goldbot probe-feeds` to re-check

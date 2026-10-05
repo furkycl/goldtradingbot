@@ -342,3 +342,10 @@ def test_micro_account_sizing():
     rm = RiskManager(RiskSettings(risk_per_trade_pct=1.0), 100, 0.001, 0.001, 100)
     assert rm.size_position(100, 4000, 3990) == pytest.approx(0.001)   # $10 stop -> 0.1 oz
     assert rm.size_position(100, 4000, 3970) == 0.0                     # $30 stop -> too big
+
+
+def test_ladder_profile_loads():
+    from goldbot.config import ROOT
+    s = load_settings(ROOT / "config" / "profiles" / "ladder_100_to_1000.yaml")
+    assert s.risk.trading_cap == 1000 and s.risk.risk_ladder[0] == [0, 2.0]
+    assert s.mode == "paper" and s.risk.max_open_positions == 2

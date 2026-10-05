@@ -86,6 +86,7 @@ class Engine:
         self._ctl = self.state_dir / "engine.json"
         saved = self._load_ctl()
         self.paused = bool(saved.get("paused", False))
+        self._sweep_level = int(saved.get("sweep_level", 0))
         self._open: dict[str, dict] = saved.get("open", {})
         self.selector = Selector(families(params), params.ensemble_lookback, params.ensemble_min_score)
         self.selector.load(saved.get("selector"))
@@ -118,7 +119,8 @@ class Engine:
         self._ctl.parent.mkdir(parents=True, exist_ok=True)
         tmp = self._ctl.with_suffix(".tmp")
         tmp.write_text(json.dumps({"paused": self.paused, "open": self._open,
-                                   "selector": self.selector.to_dict()}, indent=1, default=str))
+                                   "selector": self.selector.to_dict(),
+                                   "sweep_level": getattr(self, "_sweep_level", 0)}, indent=1, default=str))
         tmp.replace(self._ctl)
 
     def set_paused(self, value: bool) -> None:
@@ -186,6 +188,7 @@ class Engine:
         bt = pd.Timestamp(bar_time)
         self.rm.on_new_bar((bt.tz_convert("UTC") if bt.tzinfo else bt).date(), eq)
         self.journal.equity(df.index[-2], eq)
+        self._ladder_check(eq)
 
         for pos in self.broker.positions():
             self._manage(pos, row, df)
@@ -285,6 +288,28 @@ class Engine:
                     log.info("trail %s stop %.2f -> %.2f", pos.id, pos.stop, new_stop)
 
     # ------------------------------------------------------------ operations
+    def _ladder_check(self, eq: float) -> None:
+        """Equity ladder: money above risk.trading_cap is never risked by the bot.
+        The bot cannot move funds between accounts, so it tells the operator
+        (once per $sweep_min step) to sweep the excess to the unlevered core."""
+        cap = self.s.risk.trading_cap or 0.0
+        if cap <= 0:
+            return
+        excess = eq - cap
+        step = max(self.s.risk.sweep_min, 1.0)
+        level = int(excess // step) if excess >= step else 0
+        last = int(self._load_ctl().get("sweep_level", 0))
+        if level > last:
+            self.journal.event("sweep", time=self._now_iso(), pnl=round(excess, 2), equity=round(eq, 2),
+                               reason=f"equity {eq:.2f} is {excess:.2f} above the trading cap {cap:.0f}")
+            notify(f"💰 Equity {eq:.2f} is {excess:.2f} above the trading cap {cap:.0f}. The bot keeps risking only "
+                   f"{cap:.0f}; move the excess to your unlevered core holding (gram gold / token).")
+            self._sweep_level = level
+            self._save_ctl()
+        elif level < last:
+            self._sweep_level = level
+            self._save_ctl()
+
     def _watchdog(self, bar_time) -> None:
         now = datetime.now(timezone.utc)
         age = (now - pd.Timestamp(bar_time).tz_convert("UTC").to_pydatetime()).total_seconds() \
@@ -316,7 +341,9 @@ class Engine:
     def status(self) -> str:
         st = self.rm.state
         pos = self.broker.positions()
-        lines = [f"mode {self.mode} | equity {self.broker.equity():.2f} | peak {st.peak_equity:.2f}",
+        eq_now = self.broker.equity()
+        lines = [f"mode {self.mode} | equity {eq_now:.2f} | peak {st.peak_equity:.2f} | "
+                 f"risk/trade {self.rm.risk_pct(self.rm.trading_equity(eq_now)):.2f}% of {self.rm.trading_equity(eq_now):.2f}",
                  f"trades today {st.trades_today}/{self.s.risk.max_trades_per_day} | paused {self.paused}",
                  f"halt: {st.halted_reason or 'none'} | news sentiment {self.news.sentiment():+.2f}"]
         for p in pos:

@@ -133,7 +133,22 @@ Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailes
 - `config/profiles/aggressive.yaml`: işlem başı %2 risk, %5 günlük, %30 kalıcı limit. Monte Carlo'ya göre %2 risk getiriyi yaklaşık ikiye katlar, düşüşü de ikiye katlar; %5 ve üstü ise iflas bölgesine girer, o yüzden profil %2'yi geçmez.
 - 100$ için sıralama değişmedi: **kaldıraçsız altın tut → demo'da kanıtla → sermaye ≥ 2.000$ olunca canlı.**
 
-## 8. Döngü şimdi ne yapıyor?
+## 8. İstenen plan → kodda karşılığı (5 Ekim 2026 gece)
+
+| İstek | Kodda | Nerede |
+|---|---|---|
+| Başta düşük bakiyede daha yüksek risk, sonra düşür | `risk.risk_ladder: [[0, 2.0], [500, 1.5], [1000, 1.0]]` (kod tavanı %3) | `config/profiles/ladder_100_to_1000.yaml` |
+| "Garanti" işlemlerde (haber + düzgün grafik) daha yüksek kaldıraç | **Güven skoru** 0–1: EMA trendi, 20 günlük trend, haber yönü, Londra/NY seansı, oynaklık rejimi, aşırı uzama, aile uyumu. Kademeler: ≥0,75 → risk ×1,5; 0,5–0,75 → ×1; <0,5 → ×0,5 | `confluence_tiers` (params), `goldbot/strategy.py::confluence` |
+| 1.000$'a ulaşınca üstünü spotta tut, 1.000 aynı kaldıraçla devam | `risk.trading_cap: 1000` → bot sadece 1.000$'ı riske eder; fazlası için Telegram'dan "çekirdeğe taşı" uyarısı (`sweep` kaydı) | `risk.py::trading_equity`, `engine.py::_ladder_check` |
+| Birden fazla işlem, kontrollü | `max_open_positions: 2–3`: aile başına bir pozisyon, ters yön yasak, toplam açık risk ≤ `max_total_risk_pct` | `backtest.py::select_multi`, motor aynı |
+| Stop anında | Stop ve hedef emirle birlikte broker tarafında; stopsuz emir reddedilir (baştan beri) | `brokers/*` |
+| Giriş zamanlaması | `max_entry_stretch_atr`: fiyat hızlı EMA'dan X ATR'den uzaksa kovalamaz; güven skorunda seans ve uzama bileşenleri | `strategy.py::_filtered` |
+| Öğrenen bot | Aile seçici her işlemden sonra skor günceller; haftalık döngü parametreleri mühürlü veri kapısıyla yeniler | `ensemble.py`, `self_improve.py` |
+| Anında tepki | Haber her 60 sn, Telegram kanalları anlık; **giriş kararı saatlik mum kapanışında** — daha hızlı zaman dilimlerinde maliyet avantajı yiyor (§2) | `news/`, `engine.py` |
+
+**Neyin kanıtlı, neyin deneme olduğu:** Çoklu pozisyon ve merdiven, risk kuralı; güven skoru ve kovalamama filtresi ise **hipotez**. Aylık `compare_strategies.py` artık şunu raporluyor: yüksek skorlu işlemler gerçekten daha çok R kazanıyor mu (kova analizi), kovalamama filtresi getiriyi artırıyor mu, 1 vs 3 pozisyon ne fark ediyor. Sonuçlar `reports/strategies-*.md` içinde; varsayılan `params.yaml` bu özellikleri ancak gerçek veri "evet" derse açar.
+
+## 9. Döngü şimdi ne yapıyor?
 
 | İş | Sıklık | Ne değiştirebilir |
 |---|---|---|
