@@ -35,14 +35,15 @@ def load_csv(path: str | Path) -> pd.DataFrame:
     return normalize(pd.read_csv(path))
 
 
-def load_yfinance(symbol: str = "GC=F", period: str = "730d", interval: str = "1h") -> pd.DataFrame:
+def load_yfinance(symbol: str = "GC=F", period: str = "730d", interval: str = "1h",
+                  min_bars: int = 500) -> pd.DataFrame:
     import yfinance as yf  # optional dependency
 
     df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=False)
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     df = normalize(df)
-    if len(df) < 500:
+    if len(df) < min_bars:
         raise RuntimeError(f"yfinance returned only {len(df)} bars for {symbol}")
     return df
 

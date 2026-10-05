@@ -23,6 +23,8 @@ class PaperBroker(Broker):
         self.closed: list[dict] = []
         self.feed = feed
         self._last: float | None = None
+        self._cache: pd.DataFrame | None = None
+        self._cache_t = 0.0
         self._load()
 
     # ---------------------------------------------------------- persistence
@@ -47,9 +49,23 @@ class PaperBroker(Broker):
     def candles(self, timeframe: str, count: int) -> pd.DataFrame:
         if self.feed is not None:
             return self.feed.tail(count)
+        import time
+        if self._cache is not None and time.time() - self._cache_t < 55:
+            return self._cache.tail(count)
         from ..data import load_yfinance
-        period = "60d" if timeframe in ("5m", "15m", "30m") else "730d"
-        return load_yfinance("GC=F", period=period, interval=timeframe).tail(count)
+        bars_per_day = {"5m": 276, "15m": 92, "30m": 46, "1h": 23, "4h": 6, "1d": 1}.get(timeframe, 23)
+        days = int(count / bars_per_day * 1.6) + 7          # weekends + holidays margin
+        days = min(days, 59 if timeframe in ("5m", "15m", "30m") else 729)
+        df = load_yfinance(self.s.broker_options.get("paper_symbol", "GC=F"), period=f"{days}d",
+                           interval=timeframe, min_bars=min(count, 50))
+        self._cache, self._cache_t = df, time.time()
+        return df.tail(count)
+
+    def closed_pnl(self, position_id: str) -> float | None:
+        for c in reversed(self.closed):
+            if c["id"] == position_id:
+                return float(c["pnl"])
+        return None
 
     def set_last(self, price: float) -> None:
         self._last = price

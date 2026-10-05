@@ -161,7 +161,7 @@ def test_engine_paper_end_to_end(df, tmp_path):
     p = StrategyParams(adx_min=0)
     feed = df.iloc[:400]
     broker = PaperBroker(s, feed=feed, state_path=tmp_path / "p.json")
-    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]), state_dir=tmp_path)
     opened = 0
     for i in range(400, 1400):
         broker.feed = df.iloc[: i + 1]
@@ -221,7 +221,7 @@ def test_engine_time_stop_matches_backtest_rule(df, tmp_path):
     s = big_settings()
     p = StrategyParams(adx_min=0, max_hold_bars=6)
     broker = PaperBroker(s, feed=df.iloc[:400], state_path=tmp_path / "p.json")
-    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]), state_dir=tmp_path)
     for i in range(400, 1400):
         broker.feed = df.iloc[: i + 1]
         eng.step()
@@ -233,7 +233,7 @@ def _replay(df, s, p, tmp_path, start=400, end=1400):
     """Replay where the last row is the bar still FORMING (only its open is known),
     exactly like MT5 / ccxt / yfinance return candles live."""
     broker = PaperBroker(s, feed=df.iloc[:start], state_path=tmp_path / "p.json")
-    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]), state_dir=tmp_path)
     for i in range(start, end):
         feed = df.iloc[: i + 1].copy()
         o = feed["open"].iloc[-1]
@@ -309,7 +309,7 @@ def test_cost_guard_blocks_expensive_venue(df, tmp_path):
     s = big_settings(mode="demo", commission_per_lot=5000.0)   # ~token-exchange fees
     p = StrategyParams(adx_min=0)
     broker = PaperBroker(s, feed=df.iloc[:400], state_path=tmp_path / "p.json")
-    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]), state_dir=tmp_path)
     msgs = []
     for i in range(400, 900):
         broker.feed = df.iloc[: i + 1]
@@ -321,7 +321,7 @@ def test_cost_guard_blocks_expensive_venue(df, tmp_path):
 def test_cost_guard_off_in_paper_mode(df, tmp_path):
     s = big_settings(commission_per_lot=5000.0)                 # paper: research allowed
     broker = PaperBroker(s, feed=df.iloc[:400], state_path=tmp_path / "p.json")
-    eng = Engine(s, StrategyParams(adx_min=0), broker=broker, news=NewsAggregator(rss=[]))
+    eng = Engine(s, StrategyParams(adx_min=0), broker=broker, news=NewsAggregator(rss=[]), state_dir=tmp_path)
     for i in range(400, 900):
         broker.feed = df.iloc[: i + 1]
         eng.step()
