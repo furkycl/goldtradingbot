@@ -1,69 +1,69 @@
 {
   "date": "2026-10-05",
   "data": "yfinance GC=F",
-  "bars": 13729,
+  "bars": 13730,
   "accepted": false,
-  "reason": "candidate rejected: beats baseline in only 2/4 folds",
+  "reason": "candidate rejected: beats baseline in only 1/4 folds",
   "baseline_oos": {
-    "median_score": 1.7701,
-    "worst_dd": 3.79,
-    "total_trades": 133,
-    "median_pf": 1.62,
-    "total_return_pct": 17.79,
+    "median_score": 1.8118,
+    "worst_dd": 4.91,
+    "total_trades": 160,
+    "median_pf": 1.69,
+    "total_return_pct": 18.09,
     "fold_return_pct": [
-      2.74,
-      10.58,
-      -1.31,
-      5.78
+      -0.8,
+      7.16,
+      2.73,
+      9.0
     ],
     "fold_max_dd_pct": [
-      3.17,
-      1.61,
-      3.79,
-      2.16
+      4.91,
+      1.68,
+      3.33,
+      3.21
     ],
     "fold_win_rate_pct": [
-      52.9,
-      58.3,
-      36.8,
-      54.1
+      42.9,
+      46.7,
+      42.9,
+      54.3
     ]
   },
   "holdout": {
     "from": "2026-10-05 00:00:00+00:00",
-    "to": "2026-10-05 17:00:00+00:00",
-    "bars": 18,
+    "to": "2026-10-05 18:00:00+00:00",
+    "bars": 19,
     "current_params_forward_test": {
       "trades": 0,
       "return_pct": 0.0,
       "score": 0.0,
-      "bars": 18
+      "bars": 19
     },
     "candidate": null
   },
   "candidate_oos": {
-    "median_score": 0.4442,
-    "worst_dd": 7.13,
-    "total_trades": 83,
-    "median_pf": 1.19,
-    "total_return_pct": 8.33,
+    "median_score": 0.3263,
+    "worst_dd": 3.99,
+    "total_trades": 76,
+    "median_pf": 1.17,
+    "total_return_pct": 4.63,
     "fold_return_pct": [
-      4.38,
-      6.46,
-      -0.38,
-      -2.13
+      1.38,
+      4.46,
+      0.75,
+      -1.96
     ],
     "fold_max_dd_pct": [
-      4.6,
-      2.66,
-      4.47,
-      7.13
+      3.09,
+      2.54,
+      3.64,
+      3.99
     ],
     "fold_win_rate_pct": [
-      46.2,
-      50.0,
       33.3,
-      27.3
+      46.2,
+      33.3,
+      40.0
     ]
   }
 }
