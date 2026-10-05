@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+import pandas as pd
+
 import pytest
 
 from goldbot.backtest import run_backtest
@@ -116,7 +118,8 @@ def test_backtest_100_dollar_account_reports_skips(df):
 
 # -------------------------------------------------------------- optimize
 def test_walk_forward_folds_are_out_of_sample(df):
-    for train, test in folds(df, 4):
+    for train, test, oos_start in folds(df, 4):
+        assert test.index[0] < oos_start <= test.index[-1]
         assert train.index[-1] < test.index[-1]
         assert len(test) > 0
 
@@ -224,3 +227,79 @@ def test_engine_time_stop_matches_backtest_rule(df, tmp_path):
         eng.step()
     assert any(c["reason"] == "manual" for c in broker.closed)  # engine-initiated time-stop closes
     assert all(pos.opened_at for pos in broker.positions())
+
+
+def _replay(df, s, p, tmp_path, start=400, end=1400):
+    """Replay where the last row is the bar still FORMING (only its open is known),
+    exactly like MT5 / ccxt / yfinance return candles live."""
+    broker = PaperBroker(s, feed=df.iloc[:start], state_path=tmp_path / "p.json")
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    for i in range(start, end):
+        feed = df.iloc[: i + 1].copy()
+        o = feed["open"].iloc[-1]
+        feed.iloc[-1, feed.columns.get_indexer(["high", "low", "close"])] = o
+        broker.feed = feed
+        eng.step()
+    return broker
+
+
+def test_engine_entries_match_backtest(df, tmp_path):
+    s = big_settings(financing_pct_per_year=0.0)
+    p = StrategyParams(adx_min=0, max_hold_bars=12)
+    broker = _replay(df, s, p, tmp_path)
+    bt = run_backtest(df.iloc[:1400], s, p, trade_from=df.index[400])
+    eng_entries = [pd.Timestamp(c["opened_at"]) for c in broker.closed]
+    bt_entries = [t.entry_time for t in bt.trades if t.entry_time < df.index[1390]]
+    n = min(len(eng_entries), len(bt_entries), 10)
+    assert n >= 5
+    assert eng_entries[:n] == bt_entries[:n]
+    for c, t in zip(broker.closed[:n], bt.trades[:n]):
+        assert c["reason"].replace("manual", "time_stop") in (t.reason, "manual")
+        assert abs(c["entry"] - t.entry) < 1e-6
+
+
+# ------------------------------------------------------------- audit fixes
+def test_trade_from_blocks_warmup_trades(df):
+    start = df.index[1500]
+    r = run_backtest(df, big_settings(), StrategyParams(adx_min=0), trade_from=start)
+    assert r.trades and all(t.entry_time > start for t in r.trades)
+    assert r.equity.index[0] <= start and r.equity.iloc[0] == 10_000
+
+
+def test_financing_costs_money(df):
+    a = run_backtest(df, big_settings(financing_pct_per_year=0.0), StrategyParams()).equity.iloc[-1]
+    b = run_backtest(df, big_settings(financing_pct_per_year=5.0), StrategyParams()).equity.iloc[-1]
+    assert b < a
+
+
+def test_random_entry_hook(df):
+    import numpy as np
+    rng = np.random.default_rng(0)
+    r = run_backtest(df, big_settings(), StrategyParams(),
+                     entry_fn=lambda i, ts: (1 if rng.random() < 0.5 else -1) if rng.random() < 0.05 else 0)
+    assert r.stats["trades"] > 20 and all(t.stop for t in r.trades)
+
+
+def test_optimizer_requires_paired_fold_wins():
+    from goldbot.optimize import clearly_better
+    base = {"median_score": 1.0, "total_return_pct": 10, "folds": [{"return_pct": x} for x in (1, 2, 3, 4)]}
+    cand = {"median_score": 2.0, "total_return_pct": 20, "folds": [{"return_pct": x} for x in (9, 9, 0, 0)]}
+    assert not clearly_better(cand, base)[0]          # big score jump but wins only 2/4 folds
+    cand["folds"] = [{"return_pct": x} for x in (2, 3, 4, 5)]
+    assert clearly_better(cand, base)[0]
+
+
+def test_daily_strategies_no_lookahead():
+    from goldbot import daily as D
+    from goldbot.data import synthetic_ohlc
+    d = synthetic_ohlc(1500, seed=2, freq="1D", vol=0.01)
+    c = d["close"]
+    t = d.iloc[:900]
+    pairs = [(D.tsmom(c, 63), D.tsmom(t["close"], 63)),
+             (D.sma_filter(c, 50), D.sma_filter(t["close"], 50)),
+             (D.donchian_daily(c, d["high"], d["low"], 20, 10),
+              D.donchian_daily(t["close"], t["high"], t["low"], 20, 10))]
+    for full, part in pairs:   # truncating the future must not change past positions
+        assert (full.iloc[:900] == part).all()
+    r = D.returns_from_positions(c, D.buy_hold(c), cost_bps=0, financing_pct=0)
+    assert abs((1 + r).prod() - c.iloc[-1] / c.iloc[0]) < 1e-9

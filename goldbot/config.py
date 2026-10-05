@@ -69,6 +69,7 @@ class Settings:
     starting_equity: float = 100.0
     commission_per_lot: float = 7.0      # round turn, USD per 100oz lot
     spread: float = 0.30                 # USD per oz, assumed for backtests
+    financing_pct_per_year: float = 5.0  # overnight swap on CFD notional (conservative)
     contract_size: float = 100.0         # oz per lot
     min_lot: float = 0.01
     lot_step: float = 0.01

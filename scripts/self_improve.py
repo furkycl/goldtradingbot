@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import json
 import sys
+
+import pandas as pd
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,7 +26,10 @@ from goldbot.backtest import run_backtest  # noqa: E402
 from goldbot.optimize import score, search  # noqa: E402
 from goldbot.strategy import warmup_bars  # noqa: E402
 
-HOLDOUT_FRAC = 0.15  # most recent bars; never used for search or selection
+import yaml  # noqa: E402
+
+VALID = yaml.safe_load((ROOT / "config" / "validation.yaml").read_text())
+HOLDOUT_START = pd.Timestamp(VALID["holdout_start"], tz="UTC")
 
 
 def _summary(ev: dict) -> dict:
@@ -45,22 +50,30 @@ def main() -> int:
         print(f"data download failed ({exc}); using synthetic data — no params will be changed")
         return 78
     seed = int(datetime.now(timezone.utc).strftime("%Y%m%d"))
-    cut = int(len(df) * (1 - HOLDOUT_FRAC))
+    cut = int(df.index.searchsorted(HOLDOUT_START))
     research_df = df.iloc[:cut]
+    n_hold = len(df) - cut
     result = search(research_df, settings, params, trials=60, seed=seed)
 
     def holdout(p):
-        warm = max(300, warmup_bars(p) + 50)
-        st = run_backtest(df.iloc[cut - warm:], settings, p).stats
-        return {**st, "score": round(score(st), 4)}
+        if n_hold < 50:
+            return {"trades": 0, "return_pct": 0.0, "score": 0.0, "bars": n_hold}
+        st = run_backtest(df, settings, p, trade_from=HOLDOUT_START).stats
+        return {**st, "score": round(score(st), 4), "bars": n_hold}
 
     hold_base = holdout(params)
+    hold_cand = None
     if result["accepted"]:
         hold_cand = holdout(result["params"])
-        if hold_cand["score"] < hold_base["score"]:
+        need = hold_base["score"] + VALID["holdout_margin"]
+        if n_hold < VALID["holdout_min_bars"]:
+            result["accepted"] = False
+            result["reason"] = (f"waiting for unseen data: {n_hold}/{VALID['holdout_min_bars']} holdout bars "
+                                f"(walk-forward said: {result['reason']})")
+        elif hold_cand["score"] < need:
             result["accepted"] = False
             result["reason"] = (f"rejected on sealed holdout: {hold_base['score']} -> {hold_cand['score']} "
-                                f"(walk-forward said: {result['reason']})")
+                                f"(needs >= {round(need, 4)}; walk-forward said: {result['reason']})")
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     reports = ROOT / "reports"
@@ -69,8 +82,12 @@ def main() -> int:
         "date": stamp, "data": source, "bars": len(df), "accepted": result["accepted"],
         "reason": result["reason"],
         "baseline_oos": _summary(result["baseline"]),
-        "holdout": {"from": str(df.index[cut]), "to": str(df.index[-1]), "baseline": hold_base},
+        "holdout": {"from": str(HOLDOUT_START), "to": str(df.index[-1]), "bars": n_hold,
+                    "current_params_forward_test": hold_base},
     }
+    if "candidate" in result:
+        report["candidate_oos"] = _summary(result["candidate"])
+        report["holdout"]["candidate"] = hold_cand
     if result["accepted"]:
         report["candidate_oos"] = _summary(result["candidate"])
         report["holdout"]["candidate"] = hold_cand

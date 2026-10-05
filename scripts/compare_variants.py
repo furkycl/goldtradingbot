@@ -49,6 +49,10 @@ def main() -> int:
     except Exception as exc:
         print(f"data download failed: {exc}")
         return 1
+    import pandas as pd
+    import yaml
+    hold = pd.Timestamp(yaml.safe_load((ROOT / "config" / "validation.yaml").read_text())["holdout_start"], tz="UTC")
+    df = df.loc[: hold - pd.Timedelta(seconds=1)]   # never look at the sealed holdout
 
     rows = []
     baseline = {m: evaluate(df, _cost(settings, m), base) for m in (1, 2)}

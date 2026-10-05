@@ -15,6 +15,7 @@ class Position:
     stop: float
     take_profit: float
     opened_at: str = ""   # ISO UTC time of the entry bar ("" if unknown)
+    initial_risk: float = 0.0  # |entry - initial stop|; trailing starts after 1R
 
 
 @dataclass

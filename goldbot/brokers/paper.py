@@ -80,7 +80,8 @@ class PaperBroker(Broker):
             opened = pd.Timestamp(self.feed.index[-1]).isoformat()
         else:
             opened = pd.Timestamp.now(tz="UTC").isoformat()
-        p = Position(uuid.uuid4().hex[:8], side, lots, entry, stop, take_profit, opened)
+        p = Position(uuid.uuid4().hex[:8], side, lots, entry, stop, take_profit, opened,
+                     abs(entry - stop))
         self._pos[p.id] = p
         self._save()
         return OrderResult(True, p)
@@ -104,12 +105,18 @@ class PaperBroker(Broker):
         self._save()
         return True
 
-    def check_stops(self, high: float, low: float) -> list[str]:
-        """Simulate broker-side stop/TP execution for the latest bar range."""
+    def check_stops(self, high: float, low: float, open_: float | None = None) -> list[str]:
+        """Simulate broker-side stop/TP execution for the latest bar range, with the
+        same rules as the backtest: gaps through the stop fill at the open, and
+        every exit pays half the spread."""
         hits = []
+        half = self.s.spread / 2
         for p in list(self._pos.values()):
             if (p.side > 0 and low <= p.stop) or (p.side < 0 and high >= p.stop):
-                self.close(p.id, p.stop, "stop"); hits.append(p.id)
+                px = p.stop
+                if open_ is not None and ((p.side > 0 and open_ < p.stop) or (p.side < 0 and open_ > p.stop)):
+                    px = open_
+                self.close(p.id, px - p.side * half, "stop"); hits.append(p.id)
             elif p.take_profit and ((p.side > 0 and high >= p.take_profit) or (p.side < 0 and low <= p.take_profit)):
-                self.close(p.id, p.take_profit, "take_profit"); hits.append(p.id)
+                self.close(p.id, p.take_profit - p.side * half, "take_profit"); hits.append(p.id)
         return hits

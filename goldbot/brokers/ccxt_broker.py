@@ -62,8 +62,9 @@ class CCXTBroker(Broker):
         amt = float(self.ex.fetch_balance()["total"].get(base, 0))
         if amt < self.s.min_lot:
             return []
-        stop, tp = self.stops.get("spot", (0.0, 0.0))
-        return [Position("spot", 1, amt, 0.0, stop, tp)]
+        meta = self.stops.get("spot", {})
+        return [Position("spot", 1, amt, meta.get("entry", 0.0), meta.get("stop", 0.0),
+                         meta.get("tp", 0.0), meta.get("opened_at", ""), meta.get("initial_risk", 0.0))]
 
     def open(self, side: int, lots: float, stop: float, take_profit: float) -> OrderResult:
         if side < 0:
@@ -71,17 +72,22 @@ class CCXTBroker(Broker):
         if not stop:
             return OrderResult(False, message="refused: no stop loss")
         o = self.ex.create_market_buy_order(self.symbol, lots)
-        self.stops["spot"] = (stop, take_profit)
+        import pandas as pd
+        entry = float(o.get("average") or o.get("price") or self.price()[1])
+        self.stops["spot"] = {"stop": stop, "tp": take_profit, "entry": entry,
+                              "opened_at": pd.Timestamp.now(tz="UTC").isoformat(),
+                              "initial_risk": abs(entry - stop)}
         try:
             self.ex.create_order(self.symbol, "STOP_LOSS_LIMIT", "sell", lots, stop * 0.998,
                                  {"stopPrice": stop})
         except Exception:
             pass  # engine enforces the stop client-side
-        return OrderResult(True, Position("spot", 1, lots, float(o.get("average") or o.get("price") or 0), stop, take_profit))
+        m = self.stops["spot"]
+        return OrderResult(True, Position("spot", 1, lots, entry, stop, take_profit, m["opened_at"], m["initial_risk"]))
 
     def modify_stop(self, position_id: str, new_stop: float) -> bool:
         if "spot" in self.stops:
-            self.stops["spot"] = (new_stop, self.stops["spot"][1])
+            self.stops["spot"]["stop"] = new_stop
             return True
         return False
 
