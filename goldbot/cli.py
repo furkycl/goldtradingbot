@@ -79,6 +79,7 @@ def main(argv=None) -> None:
             print(f"{status:<22} newest {age:>8}  {url}")
     elif args.cmd == "run":
         from logging.handlers import RotatingFileHandler
+
         from .config import ROOT
         from .engine import Engine, mode_name
         logdir = ROOT / "state" / mode_name(settings)
@@ -112,9 +113,9 @@ def main(argv=None) -> None:
         from .core import core_signal
         print(json.dumps(core_signal(data_mod.load_yfinance("GC=F", "5y", "1d")["close"]), indent=2))
     elif args.cmd == "reset-halt":
+        from .brokers import make_broker
         from .config import ROOT
         from .engine import mode_name
-        from .brokers import make_broker
         from .risk import RiskManager
         broker = make_broker(settings)
         rm = RiskManager(settings.risk, settings.contract_size, settings.min_lot, settings.lot_step, broker.equity())

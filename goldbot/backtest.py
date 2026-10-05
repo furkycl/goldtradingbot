@@ -102,7 +102,7 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
     skipped = 0
 
     idx = data.index
-    o, h, l, c = (data[k].to_numpy() for k in ("open", "high", "low", "close"))
+    o, h, lo, c = (data[k].to_numpy() for k in ("open", "high", "low", "close"))
     atr_v = data["atr"].to_numpy()
 
     def close_pos(t: Trade, price: float, when, reason: str) -> float:
@@ -136,8 +136,8 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
 
         # 2) manage open position intrabar
         if pos is not None:
-            hit_stop = (l[i] <= pos.stop) if pos.side > 0 else (h[i] >= pos.stop)
-            hit_tp = (h[i] >= pos.take_profit) if pos.side > 0 else (l[i] <= pos.take_profit)
+            hit_stop = (lo[i] <= pos.stop) if pos.side > 0 else (h[i] >= pos.stop)
+            hit_tp = (h[i] >= pos.take_profit) if pos.side > 0 else (lo[i] <= pos.take_profit)
             if hit_stop:
                 gap_price = o[i] if ((pos.side > 0 and o[i] < pos.stop) or (pos.side < 0 and o[i] > pos.stop)) else pos.stop
                 cash += close_pos(pos, gap_price, ts, "stop")

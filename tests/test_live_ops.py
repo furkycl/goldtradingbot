@@ -79,8 +79,8 @@ def test_close_all_and_pause(tmp_path):
     assert eng.close_all() == 1 and not broker.positions()
     eng.paused = True
     msgs = []
-    for i in range(i + 1, i + 300):
-        broker.feed = df.iloc[: i + 1]
+    for j in range(i + 1, i + 300):
+        broker.feed = df.iloc[: j + 1]
         msgs.append(eng.step())
     assert not broker.positions()
     assert any("paused" in m for m in msgs)
@@ -96,6 +96,7 @@ def test_market_hours():
 
 def test_dotenv_loader(tmp_path, monkeypatch):
     import os
+
     from goldbot.config import load_dotenv
     f = tmp_path / ".env"
     f.write_text('# c\nGB_A=1\nexport GB_B="two words"\nGB_C=\nGB_D=keep\nnot a line\n')

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
-
 import pytest
 
 from goldbot.backtest import run_backtest
@@ -197,6 +196,7 @@ def test_daily_trend_has_no_lookahead(df):
 
 def test_session_filter():
     import pandas as pd
+
     from goldbot.strategy import in_session
     p = StrategyParams(session_start_utc=7, session_end_utc=17)
     assert in_session(pd.Timestamp("2026-01-05 08:00", tz="UTC"), p)

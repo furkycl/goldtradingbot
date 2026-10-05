@@ -1,4 +1,4 @@
-from .base import Broker, Position, OrderResult
+from .base import Broker, OrderResult, Position
 from .paper import PaperBroker
 
 
