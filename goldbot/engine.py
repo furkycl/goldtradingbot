@@ -78,6 +78,7 @@ class Engine:
         self.last_bar = None
         self.paused = False
         self.stop_evt = threading.Event()
+        self.lock = threading.RLock()          # step() vs remote commands
         self._open: dict[str, dict] = {p.id: vars(p).copy() for p in self.broker.positions()}
         self._close_reason: dict[str, str] = {}
         self._stale_notified = False
@@ -258,7 +259,8 @@ class Engine:
             log.debug("telegram control not started: %s", exc)
         while not self.stop_evt.is_set():
             try:
-                msg = self.step()
+                with self.lock:
+                    msg = self.step()
                 if msg not in ("no new bar",):
                     log.info(msg)
             except Exception as exc:  # keep running; positions are protected broker-side
