@@ -19,7 +19,7 @@ import pandas as pd
 
 from .config import Settings, StrategyParams
 from .risk import RiskManager
-from .strategy import Selector, families, prepare, signal_at, warmup_bars
+from .strategy import Selector, candidates_at, families, prepare, signal_at, warmup_bars
 
 
 @dataclass
@@ -102,11 +102,12 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
                      settings.lot_step, settings.starting_equity)
     cash = settings.starting_equity
     half_spread = settings.spread / 2
-    pos: Trade | None = None
-    pending = None
+    positions: list[Trade] = []
+    pending: list = []
     trades: list[Trade] = []
     equity_curve = []
     skipped = 0
+    max_pos = max(1, settings.risk.max_open_positions)
 
     idx = data.index
     o, h, lo, c = (data[k].to_numpy() for k in ("open", "high", "low", "close"))
@@ -125,46 +126,56 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
         selector.update(t.strategy, t.pnl / risk_usd if risk_usd else 0.0)
         return t.pnl
 
+    def open_risk_usd() -> float:
+        return sum(t.initial_risk * t.lots * settings.contract_size for t in positions)
+
     secs = np.diff(idx.asi8) / 1e9 if len(idx) > 1 else np.array([])
     for i in range(len(data)):
         ts = idx[i]
         # 0) financing on positions held from the previous bar
-        if pos is not None and fin_rate and i > 0:
-            cash -= pos.lots * settings.contract_size * c[i - 1] * fin_rate * secs[i - 1] / (365 * 86400)
-        # 1) execute pending entry at this bar's open
-        if pending is not None and pos is None:
-            sig = pending
-            pending = None
+        if positions and fin_rate and i > 0:
+            for t in positions:
+                cash -= t.lots * settings.contract_size * c[i - 1] * fin_rate * secs[i - 1] / (365 * 86400)
+        # 1) execute pending entries at this bar's open
+        for sig in pending:
+            if len(positions) >= max_pos:
+                break
             entry = o[i] + sig.side * half_spread
             stop_dist = abs(sig.entry_ref - sig.stop)
             stop = entry - sig.side * stop_dist
-            tp = entry + sig.side * stop_dist * params.take_profit_r
-            lots = rm.size_position(cash, entry, stop, risk_scale(params, median_atr, atr_v[i]))
+            tp = entry + sig.side * stop_dist * (abs(sig.take_profit - sig.entry_ref) / stop_dist
+                                                 if stop_dist else params.take_profit_r)
+            mtm_now = cash + sum(t.side * (o[i] - t.entry) * t.lots * settings.contract_size for t in positions)
+            budget = mtm_now * settings.risk.max_total_risk_pct / 100 - open_risk_usd()
+            lots = rm.size_position(cash, entry, stop, risk_scale(params, median_atr, atr_v[i]) * sig.risk_mult)
+            if lots > 0 and stop_dist * lots * settings.contract_size > budget + 1e-9:
+                lots = 0.0                                   # would exceed the total open-risk cap
             if lots > 0:
-                pos = Trade(sig.side, lots, ts, entry, stop, tp, stop_dist, entry_bar=i,
-                            strategy=sig.strategy, hard_exit_bars=sig.hard_exit_bars)
+                positions.append(Trade(sig.side, lots, ts, entry, stop, tp, stop_dist, entry_bar=i,
+                                       strategy=sig.strategy, hard_exit_bars=sig.hard_exit_bars))
                 rm.on_trade_opened()
             else:
                 skipped += 1
+        pending = []
 
-        # 2) manage open position intrabar
-        if pos is not None:
+        # 2) manage open positions intrabar
+        for pos in list(positions):
             hit_stop = (lo[i] <= pos.stop) if pos.side > 0 else (h[i] >= pos.stop)
             hit_tp = (h[i] >= pos.take_profit) if pos.side > 0 else (lo[i] <= pos.take_profit)
             if hit_stop:
                 gap_price = o[i] if ((pos.side > 0 and o[i] < pos.stop) or (pos.side < 0 and o[i] > pos.stop)) else pos.stop
                 cash += close_pos(pos, gap_price, ts, "stop")
-                pos = None
+                positions.remove(pos)
             elif hit_tp:
                 cash += close_pos(pos, pos.take_profit, ts, "take_profit")
-                pos = None
+                positions.remove(pos)
             elif pos.hard_exit_bars and i - pos.entry_bar >= pos.hard_exit_bars:
                 cash += close_pos(pos, c[i], ts, "hard_exit")
-                pos = None
+                positions.remove(pos)
             elif (params.max_hold_bars and i - pos.entry_bar >= params.max_hold_bars
                   and pos.side * (c[i] - pos.entry) < 0.5 * atr_v[i]):
                 cash += close_pos(pos, c[i], ts, "time_stop")
-                pos = None
+                positions.remove(pos)
             else:
                 # trailing stop once 1R in profit
                 move = pos.side * (c[i] - pos.entry)
@@ -174,33 +185,55 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
                         pos.stop = new_stop
 
         # 3) mark to market
-        mtm = cash
-        if pos is not None:
-            mtm += pos.side * (c[i] - pos.entry) * pos.lots * settings.contract_size
+        mtm = cash + sum(t.side * (c[i] - t.entry) * t.lots * settings.contract_size for t in positions)
         equity_curve.append(mtm)
         rm.on_new_bar(ts.date(), mtm)
 
-        # 4) new signal on close
-        if i >= max(warmup_bars(params), start_i) and pos is None and pending is None and i < len(data) - 1:
-            ok, _ = rm.can_trade(0)
+        # 4) new signals on close
+        if i >= max(warmup_bars(params), start_i) and len(positions) < max_pos and i < len(data) - 1:
+            ok, _ = rm.can_trade(len(positions))
             if ok:
                 if entry_fn is not None:
                     side = entry_fn(i, ts)
                     sig = _forced_signal(data.iloc[i], params, side) if side else None
+                    chosen = [sig] if (sig is not None and sig.side) else []
+                elif max_pos == 1:
+                    sig = signal_at(data.iloc[i], params, sentiment_fn(ts) if sentiment_fn else 0.0, selector)
+                    chosen = [sig] if sig.side else []
                 else:
-                    sent = sentiment_fn(ts) if sentiment_fn else 0.0
-                    sig = signal_at(data.iloc[i], params, sent, selector)
-                if sig is not None and sig.side != 0 and not (settings.long_only and sig.side < 0):
-                    pending = sig
+                    chosen = select_multi(candidates_at(data.iloc[i], params, sentiment_fn(ts) if sentiment_fn else 0.0),
+                                          positions, selector, max_pos - len(positions))
+                pending = [s for s in chosen if not (settings.long_only and s.side < 0)]
 
-    if pos is not None:
+    for pos in positions:
         cash += close_pos(pos, c[-1], idx[-1], "end_of_data")
+    if positions:
         equity_curve[-1] = cash
+    positions = []
 
     eq = pd.Series(equity_curve, index=idx)
     if start_i:
         eq = eq.iloc[max(0, start_i - 1):]
     return BacktestResult(eq, trades, skipped, rm.state.history)
+
+
+def select_multi(cands, open_positions, selector: Selector, slots: int) -> list:
+    """Multi-position rules (identical in engine.py):
+    one position per family, never opposite to an open position, families
+    below the selector floor are benched, best scores first, up to `slots`."""
+    held = {getattr(p, "strategy", "") for p in open_positions}
+    sides = {p.side for p in open_positions}
+    ok = [c for c in cands if c.side and c.strategy not in held and -c.side not in sides
+          and selector.score.get(c.strategy, 0.0) >= selector.min_score]
+    ok.sort(key=lambda c: selector.score.get(c.strategy, 0.0), reverse=True)
+    out, taken_sides = [], set(sides)
+    for c in ok:
+        if -c.side in taken_sides:
+            continue
+        out.append(c); taken_sides.add(c.side)
+        if len(out) >= slots:
+            break
+    return out
 
 
 def risk_scale(params: StrategyParams, median_atr: float, atr_now: float) -> float:

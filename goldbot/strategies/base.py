@@ -15,6 +15,7 @@ class Signal:
     reason: str
     strategy: str = ""
     hard_exit_bars: int = 0    # close unconditionally after N bars (0 = off)
+    risk_mult: float = 1.0     # confluence tier multiplier on risk_per_trade_pct
 
 
 def none(row: pd.Series, reason: str = "") -> Signal:

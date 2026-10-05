@@ -18,12 +18,13 @@ import os
 import signal
 import threading
 import time
+import types
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
-from .backtest import risk_scale
+from .backtest import risk_scale, select_multi
 from .brokers import make_broker
 from .brokers.paper import PaperBroker
 from .config import ROOT, Settings, StrategyParams
@@ -31,7 +32,7 @@ from .journal import Journal
 from .news import NewsAggregator
 from .risk import RiskManager
 from .safety import redact
-from .strategy import Selector, families, prepare, signal_at, warmup_bars
+from .strategy import Selector, candidates_at, families, prepare, signal_at, warmup_bars
 
 log = logging.getLogger("goldbot.engine")
 
@@ -200,24 +201,44 @@ class Engine:
             return "no entry: high-impact news blackout"
 
         sent = self.news.sentiment(now)
-        sig = signal_at(row, self.p, sent, self.selector)
-        if sig.side == 0:
-            return f"flat (sentiment {sent:+.2f}) {sig.reason}"
+        max_pos = max(1, self.s.risk.max_open_positions)
+        if max_pos == 1:
+            sig = signal_at(row, self.p, sent, self.selector)
+            chosen = [sig] if sig.side else []
+            if not chosen:
+                return f"flat (sentiment {sent:+.2f}) {sig.reason}"
+        else:
+            held = [types.SimpleNamespace(side=p.side, strategy=self._open.get(p.id, {}).get("strategy", ""))
+                    for p in positions]
+            chosen = select_multi(candidates_at(row, self.p, sent), held, self.selector, max_pos - len(positions))
+            if not chosen:
+                return f"flat (sentiment {sent:+.2f}, {len(positions)} open)"
+        results = []
+        for sig in chosen:
+            results.append(self._enter(sig, row, data, eq, sent))
+        return "; ".join(results)
+
+    def _enter(self, sig, row, data, eq: float, sent: float) -> str:
         if self.s.long_only and sig.side < 0:
             return "short signal ignored (long_only)"
-
         bid, ask = self.broker.price()
         entry = ask if sig.side > 0 else bid
         dist = abs(sig.entry_ref - sig.stop)
         stop = round(entry - sig.side * dist, 2)
-        tp = round(entry + sig.side * dist * self.p.take_profit_r, 2)
+        tp_r = abs(sig.take_profit - sig.entry_ref) / dist if dist else self.p.take_profit_r
+        tp = round(entry + sig.side * dist * tp_r, 2)
         cost_oz = (ask - bid) + self.s.commission_per_lot / max(self.s.contract_size, 1e-9)
         cost_r = cost_oz / max(dist, 1e-9)
         if cost_r > self.s.risk.max_cost_in_r and (self.s.live_enabled or self.s.demo_enabled):
             return (f"no entry: cost {cost_r:.2f}R > max {self.s.risk.max_cost_in_r}R — this venue is too "
                     f"expensive for this strategy (see docs/STRATEGY.md)")
         median_atr = float(data["atr"].dropna().median())
-        lots = self.rm.size_position(eq, entry, stop, risk_scale(self.p, median_atr, float(row["atr"])))
+        lots = self.rm.size_position(eq, entry, stop, risk_scale(self.p, median_atr, float(row["atr"])) * sig.risk_mult)
+        open_risk = sum(float(v.get("initial_risk") or 0) * float(v.get("lots") or 0) * self.s.contract_size
+                        for v in self._open.values())
+        budget = eq * self.s.risk.max_total_risk_pct / 100 - open_risk
+        if lots > 0 and dist * lots * self.s.contract_size > budget + 1e-9:
+            return f"no entry: total open risk cap ({self.s.risk.max_total_risk_pct}% of equity) reached"
         if lots <= 0:
             return (f"signal {sig.reason} skipped: equity {eq:.2f} too small for min lot "
                     f"{self.s.min_lot} at {self.s.risk.risk_per_trade_pct}% risk (see docs/STRATEGY.md)")
@@ -231,7 +252,7 @@ class Engine:
                                price=round(p.entry, 2), stop=stop, take_profit=tp, reason=sig.reason,
                                equity=round(eq, 2))
             notify(f"OPEN {'BUY' if sig.side > 0 else 'SELL'} {lots} @ {p.entry:.2f} SL {stop} TP {tp} "
-                   f"| {sig.reason} | news {sent:+.2f} | cost {cost_r:.3f}R")
+                   f"| {sig.reason} | news {sent:+.2f} | cost {cost_r:.3f}R | risk x{sig.risk_mult:.2f}")
             return "opened"
         notify(f"order rejected: {res.message}")
         return res.message

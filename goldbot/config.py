@@ -51,6 +51,7 @@ class RiskSettings:
     max_drawdown_pct: float = 20.0       # kill switch from equity peak
     max_leverage: float = 10.0           # SPK cap for Turkish residents is 10:1
     max_open_positions: int = 1
+    max_total_risk_pct: float = 2.0      # sum of open initial risk, % of equity (multi-position)
     max_trades_per_day: int = 4
     # Refuse LIVE entries when round-trip cost exceeds this fraction of the
     # trade's risk (1R). Validation 2026-10-05: edge survives ~0.01R (MT5 CFD),
