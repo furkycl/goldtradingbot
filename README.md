@@ -31,6 +31,8 @@ Seçenekler (ayrıntılar `docs/RESEARCH.md` §2):
 
 Ayrıntılı karşılaştırma: [`docs/RESEARCH.md`](docs/RESEARCH.md)
 
+**Strateji kararı ve gerçek veri doğrulaması:** [`docs/STRATEGY.md`](docs/STRATEGY.md). Kısaca: saatlik strateji umut verici ama kanıtlanmadı. Sadece düşük maliyetli lisanslı MT5 CFD'de çalışıyor. 100$ için en mantıklı yol kaldıraçsız altın tutmak ve botu demo hesapta test etmek.
+
 ## Kurulum
 
 ```bash
@@ -52,6 +54,12 @@ python -m goldbot probe-feeds                     # haber akışları çalışı
 python scripts/compare_variants.py                # araştırma varyantlarını gerçek veride karşılaştır
 python -m goldbot run                             # sanal (paper) işlem döngüsü
 ```
+
+## Demo hesapta test (önerilen sonraki adım)
+
+SPK lisanslı bir kurumdan ücretsiz MT5 demo hesabı aç. `config/settings.yaml` içinde `mode: demo` ve `broker: mt5` yap, `.env` dosyasına demo hesap bilgilerini gir. Bot hesabın **gerçekten demo** olduğunu doğrulamadan işlem yapmaz. Gerçek spread ve emir iletimiyle, gerçek para olmadan ileriye dönük test yapmış olursun.
+
+**Maliyet koruması:** İşlem başı maliyet riskin %5'ini (`risk.max_cost_in_r`) aşarsa bot demo ve canlı modda işlem açmaz. Gerçek veride bu strateji pahalı platformlarda (VİOP, token borsaları) avantajını kaybediyor.
 
 ## Gerçek parayla işleme geçmek (bunu sadece sen yapabilirsin)
 

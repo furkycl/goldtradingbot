@@ -30,6 +30,10 @@ class RiskSettings:
     max_leverage: float = 10.0           # SPK cap for Turkish residents is 10:1
     max_open_positions: int = 1
     max_trades_per_day: int = 4
+    # Refuse LIVE entries when round-trip cost exceeds this fraction of the
+    # trade's risk (1R). Validation 2026-10-05: edge survives ~0.01R (MT5 CFD),
+    # mostly gone at 0.10R (VIOP), negative at 0.20R+ (token spot).
+    max_cost_in_r: float = 0.05
 
 
 @dataclass
@@ -63,7 +67,7 @@ class StrategyParams:
 
 @dataclass
 class Settings:
-    mode: str = "paper"                  # paper | live
+    mode: str = "paper"                  # paper | demo | live
     broker: str = "paper"                # paper | mt5 | ccxt
     symbol: str = "XAUUSD"
     starting_equity: float = 100.0
@@ -79,6 +83,12 @@ class Settings:
     risk: RiskSettings = field(default_factory=RiskSettings)
     news: dict[str, Any] = field(default_factory=dict)
     broker_options: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def demo_enabled(self) -> bool:
+        """Broker DEMO account (real spreads/execution, no real money). The broker
+        adapter must verify the account really is a demo account."""
+        return self.mode == "demo"
 
     @property
     def live_enabled(self) -> bool:

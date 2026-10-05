@@ -303,3 +303,26 @@ def test_daily_strategies_no_lookahead():
         assert (full.iloc[:900] == part).all()
     r = D.returns_from_positions(c, D.buy_hold(c), cost_bps=0, financing_pct=0)
     assert abs((1 + r).prod() - c.iloc[-1] / c.iloc[0]) < 1e-9
+
+
+def test_cost_guard_blocks_expensive_venue(df, tmp_path):
+    s = big_settings(mode="demo", commission_per_lot=5000.0)   # ~token-exchange fees
+    p = StrategyParams(adx_min=0)
+    broker = PaperBroker(s, feed=df.iloc[:400], state_path=tmp_path / "p.json")
+    eng = Engine(s, p, broker=broker, news=NewsAggregator(rss=[]))
+    msgs = []
+    for i in range(400, 900):
+        broker.feed = df.iloc[: i + 1]
+        msgs.append(eng.step())
+    assert any("too expensive" in m for m in msgs)
+    assert not broker.closed and not broker.positions()
+
+
+def test_cost_guard_off_in_paper_mode(df, tmp_path):
+    s = big_settings(commission_per_lot=5000.0)                 # paper: research allowed
+    broker = PaperBroker(s, feed=df.iloc[:400], state_path=tmp_path / "p.json")
+    eng = Engine(s, StrategyParams(adx_min=0), broker=broker, news=NewsAggregator(rss=[]))
+    for i in range(400, 900):
+        broker.feed = df.iloc[: i + 1]
+        eng.step()
+    assert broker.closed or broker.positions()

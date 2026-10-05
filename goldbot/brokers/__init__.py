@@ -5,7 +5,7 @@ from .paper import PaperBroker
 def make_broker(settings) -> Broker:
     """Live brokers are only constructed when settings.live_enabled is True."""
     name = settings.broker
-    if name == "paper" or not settings.live_enabled:
+    if name == "paper" or not (settings.live_enabled or settings.demo_enabled):
         return PaperBroker(settings)
     if name == "mt5":
         from .mt5 import MT5Broker
