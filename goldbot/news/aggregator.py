@@ -106,7 +106,7 @@ class NewsAggregator:
             rows = requests.get("https://finnhub.io/api/v1/news",
                                 params={"category": "general", "token": key}, timeout=10).json()
         except Exception as exc:
-            log.warning("finnhub failed: %s", exc)
+            log.warning("finnhub failed: %s", type(exc).__name__)
             return 0
         n = 0
         for r in rows[:50]:
@@ -190,8 +190,10 @@ class NewsAggregator:
         while not stop.is_set():
             self.poll_rss()
             self.poll_finnhub()
-            if time.time() - last_cal > 3600:
-                self.poll_calendar()
+            # refresh hourly; retry every 5 min while no calendar is loaded (fail-safe)
+            if time.time() - last_cal > (3600 if self.events else 300):
+                if not self.poll_calendar():
+                    log.warning("economic calendar unavailable: news blackout NOT active")
                 last_cal = time.time()
             self.prune()
             stop.wait(every_s)

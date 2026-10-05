@@ -27,8 +27,10 @@ HELP = ("/status – durum\n/forward – ileriye dönük test ve canlıya geçi�
         "/pause – yeni işlem açma\n/resume – devam\n/closeall yes – tüm pozisyonları kapat\n/help")
 
 
-def handle_command(engine: "Engine", text: str, chat_id: str, owner_id: str) -> str | None:
-    if not owner_id or str(chat_id) != str(owner_id):
+def handle_command(engine: "Engine", text: str, sender_id: str, owner_id: str) -> str | None:
+    """`sender_id` must be the SENDER's user id (message.from.id), so in a group
+    only the owner is obeyed."""
+    if not owner_id or str(sender_id) != str(owner_id):
         return None                                   # ignore strangers silently
     parts = (text or "").strip().split()
     if not parts:
@@ -42,37 +44,47 @@ def handle_command(engine: "Engine", text: str, chat_id: str, owner_id: str) -> 
             m = evaluate_journal(engine.state_dir)
             return render_status(m, checklist(m))
         if cmd == "/pause":
-            engine.paused = True
+            engine.set_paused(True)
             return "⏸ yeni işlem açma durduruldu (açık pozisyonlar SL/TP ile korunuyor)"
         if cmd == "/resume":
-            engine.paused = False
+            engine.set_paused(False)
             return "▶️ devam ediliyor"
         if cmd == "/closeall":
             if len(parts) < 2 or parts[1].lower() != "yes":
                 return "emin misin? göndermek için: /closeall yes"
-            n = engine.close_all("telegram /closeall")
-            return f"{n} pozisyon kapatıldı"
+            n, failed = engine.close_all("telegram /closeall")
+            return f"{n} pozisyon kapatıldı" + (f", ⚠️ {failed} KAPATILAMADI — brokeri kontrol et" if failed else "")
         if cmd in ("/help", "/start"):
             return HELP
     return "bilinmeyen komut. /help"
 
 
 def _poll(engine: "Engine", token: str, owner: str) -> None:
+    import time
+
     import requests
 
     url = f"https://api.telegram.org/bot{token}"
+    started = time.time()
     offset = None
+    try:   # drop the backlog: commands sent while the bot was down must NOT run now
+        last = requests.get(f"{url}/getUpdates", params={"offset": -1}, timeout=15).json().get("result", [])
+        offset = last[-1]["update_id"] + 1 if last else None
+    except Exception as exc:
+        log.warning("telegram backlog skip failed: %s", type(exc).__name__)
     while not engine.stop_evt.is_set():
         try:
             r = requests.get(f"{url}/getUpdates", params={"timeout": 25, "offset": offset}, timeout=35).json()
             for upd in r.get("result", []):
                 offset = upd["update_id"] + 1
                 msg = upd.get("message") or {}
-                reply = handle_command(engine, msg.get("text", ""), (msg.get("chat") or {}).get("id"), owner)
+                if msg.get("date", 0) < started:
+                    continue
+                reply = handle_command(engine, msg.get("text", ""), (msg.get("from") or {}).get("id"), owner)
                 if reply:
                     requests.post(f"{url}/sendMessage", json={"chat_id": owner, "text": reply[:4000]}, timeout=10)
         except Exception as exc:
-            log.warning("telegram poll failed: %s", exc)
+            log.warning("telegram poll failed: %s", type(exc).__name__)   # never log the URL (token)
             engine.stop_evt.wait(10)
 
 

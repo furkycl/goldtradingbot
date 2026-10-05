@@ -8,7 +8,9 @@
   status [--mode M]                             forward-test results vs go-live checklist
   report [--mode M]                             HTML report (equity curve, trades)
   core                                          unlevered core-holding signal (daily trend)
-  reset-halt                                    clear the kill switch after a human review
+  telegram-login                                one-time login for reading Telegram channels
+  health                                        liveness check (used by Docker)
+  reset-halt                                    clear the kill switch after a human review (bot stopped)
 """
 from __future__ import annotations
 
@@ -45,6 +47,8 @@ def main(argv=None) -> None:
     sp = sub.add_parser("report", help="write state/<mode>/report.html")
     sp.add_argument("--mode", choices=["paper", "demo", "live"], default="paper")
     sub.add_parser("core", help="unlevered core-holding signal (daily gold trend)")
+    sub.add_parser("telegram-login", help="one-time interactive login for reading Telegram channels")
+    sub.add_parser("health", help="exit 0 if the bot is alive (log fresh) or the market is closed")
     sub.add_parser("reset-halt", help="clear a drawdown/daily halt after reviewing what happened")
     args = ap.parse_args(argv)
 
@@ -87,7 +91,16 @@ def main(argv=None) -> None:
         fh = RotatingFileHandler(logdir / "goldbot.log", maxBytes=5_000_000, backupCount=5, encoding="utf-8")
         fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
         logging.getLogger().addHandler(fh)
-        Engine(settings, params).run()
+        from .safety import InstanceLock, install_redaction
+        install_redaction()
+        lock = InstanceLock(logdir / "goldbot.lock")
+        if not lock.acquire():
+            raise SystemExit(f"another goldbot is already running in {mode_name(settings)} mode "
+                             f"(lock: {logdir / 'goldbot.lock'}); refusing to start a second one")
+        try:
+            Engine(settings, params).run()
+        finally:
+            lock.release()
     elif args.cmd == "status":
         from .config import ROOT
         from .forward import checklist, evaluate_journal, render_status
