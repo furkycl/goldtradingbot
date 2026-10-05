@@ -50,7 +50,7 @@ class Engine:
                               settings.lot_step, self.broker.equity())
         self.last_bar = None
         self.stop_evt = threading.Event()
-        mode = "LIVE" if settings.live_enabled else "PAPER"
+        mode = "LIVE" if settings.live_enabled else ("DEMO" if settings.demo_enabled else "PAPER")
         notify(f"goldbot started in {mode} mode, broker={type(self.broker).__name__}, "
                f"equity={self.broker.equity():.2f}")
 
@@ -99,6 +99,11 @@ class Engine:
         dist = abs(sig.entry_ref - sig.stop)
         stop = round(entry - sig.side * dist, 2)
         tp = round(entry + sig.side * dist * self.p.take_profit_r, 2)
+        cost_oz = (ask - bid) + self.s.commission_per_lot / max(self.s.contract_size, 1e-9)
+        cost_r = cost_oz / max(dist, 1e-9)
+        if cost_r > self.s.risk.max_cost_in_r and (self.s.live_enabled or self.s.demo_enabled):
+            return (f"no entry: cost {cost_r:.2f}R > max {self.s.risk.max_cost_in_r}R — this venue is too "
+                    f"expensive for this strategy (see docs/STRATEGY.md)")
         lots = self.rm.size_position(eq, entry, stop)
         if lots <= 0:
             return (f"signal {sig.reason} skipped: equity {eq:.2f} too small for min lot "

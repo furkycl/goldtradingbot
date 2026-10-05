@@ -31,6 +31,11 @@ class CCXTBroker(Broker):
             "apiKey": os.environ.get("CCXT_API_KEY"), "secret": os.environ.get("CCXT_SECRET"),
             "enableRateLimit": True,
         })
+        if settings.mode == "demo":
+            try:
+                self.ex.set_sandbox_mode(True)   # exchange testnet, no real money
+            except Exception as exc:
+                raise RuntimeError(f"{ex_name} has no sandbox/testnet; demo mode impossible") from exc
         self.ex.load_markets()
         self.s = settings
         self.symbol = settings.broker_options.get("symbol", "PAXG/USDT")

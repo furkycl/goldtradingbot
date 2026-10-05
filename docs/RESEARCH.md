@@ -89,7 +89,9 @@ Kaynaklar: [BIST sözleşme özellikleri](https://borsaistanbul.com/piyasalar/vi
 | Bulgu | Kanıt gücü | Kaynak |
 |---|---|---|
 | Altında 4.000'den fazla zamanlama kuralı içinden sadece **yavaş trend ve momentum** kuralları veri madenciliği düzeltmesinden sonra anlamlı kaldı (lookback 1–48 ay) | Güçlü | [Bartsch et al. — Quantpedia](https://quantpedia.com/an-extensive-test-of-market-timing-strategies-in-the-gold-market/) |
-| Trend takibi 110 yıl boyunca neredeyse tüm vadeli piyasalarda çalıştı | Güçlü | [AQR](https://www.aqr.com/Insights/Research/Journal-Article/A-Century-of-Evidence-on-Trend-Following-Investing?aqrPDF=1) |
+| Trend takibi 110 yıl boyunca neredeyse tüm vadeli piyasalarda çalıştı (çok varlıklı portföy olarak) | Güçlü | [AQR](https://www.aqr.com/Insights/Research/Journal-Article/A-Century-of-Evidence-on-Trend-Following-Investing?aqrPDF=1) |
+| Emtia ETF'lerinde mutlak trend filtresi Sharpe'ı 0,30'dan 0,63'e çıkardı. **Not:** Evren DBA/DBB/DBE/DBP; altın ayrıca test edilmedi, sadece değerli metal sepeti (DBP) içinde. | Orta (altına özgü değil) | [Quantpedia dual momentum](https://quantpedia.com/dual-vs-single-momentum-in-commodities-enhancing-risk-adjusted-returns-through-absolute-trend-filtering/) |
+| **Bu repodaki test (2001–2026):** Altında 3/6/12 aylık trend filtresi düşüşü azaltıyor ama getiriyi düşürüyor. Aynı sürede piyasada kalan rastgele zamanlamadan daha iyi değil. | Kendi verimiz | `reports/validation-2026-10-05.md` |
 | Tek bir 200 günlük ortalama, altında rejim ayırt etmede başarısız | Orta | [CXO](https://www.cxoadvisory.com/?p=15805) |
 | Altın Asya saatlerinde yükselme, Batı saatlerinde düşme eğiliminde | Orta, maliyetten sonra zayıf | [Blose & Gondhalekar](https://ideas.repec.org/a/taf/apeclt/v21y2014i18p1269-1272.html), [CBS tezi](https://research.cbs.dk/en/studentProjects/gold-price-dynamics-around-the-clock/) |
 | Hacim ve oynaklık Londra–New York çakışmasında (11–17 GMT) zirve yapıyor | Tanımlayıcı | [Batten et al. 2017](https://reading-clone.eprints-hosting.org/79175/1/BattenLuceyMcGroartyPeatUrquhart2017.pdf) |
@@ -185,6 +187,9 @@ CPI, NFP ve FOMC'de ücretsiz kaynaklar kurumsal hızla yarışamaz. Bu yüzden 
 ---
 
 ## 6. Bu repoya yansıyanlar
+
+> Güncelleme 5 Ekim 2026: Kaynaklar tek tek açılıp okundu ve doğrulandı. Strateji gerçek veride test edildi; karar ve plan için `docs/STRATEGY.md`.
+
 
 - Varsayılan RSS listesi ve Telegram kanalları doğrulanmış kaynaklarla güncellendi.
 - Finnhub desteği ve `probe-feeds` komutu eklendi.

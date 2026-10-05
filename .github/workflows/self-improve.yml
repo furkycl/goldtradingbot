@@ -52,20 +52,23 @@ jobs:
           git add -A config/params.yaml reports/
           python scripts/check_auto_diff.py HEAD --staged
 
-      - name: Branch, commit, PR, merge
-        if: steps.search.outputs.changed == 'true'
+      - name: Branch, commit, PR, merge (params change, or weekly forward-test report)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGED: ${{ steps.search.outputs.changed }}
         run: |
+          git add -A config/params.yaml reports/
+          python scripts/check_auto_diff.py HEAD --staged
+          if git diff --cached --quiet; then echo "nothing to publish"; exit 0; fi
+          KIND=$([ "$CHANGED" = "true" ] && echo "re-tune strategy params" || echo "weekly forward-test report")
           BR="auto/tune-$(date -u +%Y%m%d-%H%M)"
           git config user.name  "goldbot-self-improve"
           git config user.email "goldbot-self-improve@users.noreply.github.com"
           git checkout -b "$BR"
-          git commit -m "auto: re-tune strategy params ($(date -u +%F))" -m "$(jq -r .reason reports/self-improve-$(date -u +%F).json)"
+          git commit -m "auto: $KIND ($(date -u +%F))" -m "$(jq -r .reason reports/self-improve-$(date -u +%F).json)"
           git push -u origin "$BR"
-          if gh pr create --base main --head "$BR" \
-               --title "auto: re-tune strategy params $(date -u +%F)" \
-               --body "Walk-forward OOS improvement passed guardrails. See reports/ for details. Tests ran in the self-improve job."; then
+          if gh pr create --base main --head "$BR" --title "auto: $KIND $(date -u +%F)" \
+               --body "See reports/self-improve-$(date -u +%F).json. Tests ran in the self-improve job."; then
             gh pr merge "$BR" --squash --delete-branch
           else
             echo "::warning::Actions may not create PRs in this repo; fast-forwarding main from the tested branch instead"
@@ -74,7 +77,3 @@ jobs:
             git push origin "HEAD:main"
             git push origin --delete "$BR"
           fi
-
-      - name: Record no-change report
-        if: steps.search.outputs.changed == 'false'
-        run: ls reports/ && tail -n 30 reports/self-improve-*.json || true

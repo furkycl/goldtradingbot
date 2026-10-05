@@ -1,3 +1,8 @@
+# ⚠️ NOT RECOMMENDED FOR TRADING. reports/validation-2026-10-05.md: at token
+# exchange fees (0.10-0.20%/side) the hourly strategy LOSES money (PF 0.90 / 0.15).
+# The engine's cost guard (risk.max_cost_in_r) blocks live entries here.
+# Tokenised gold is better used as an unlevered HOLDING (see docs/STRATEGY.md).
+#
 # Small-account profile: tokenised gold (PAXG/USDT) spot, long-only, no leverage.
 # Use: cp config/profiles/small_account_paxg.yaml config/settings.yaml
 # Before going live, verify the exchange is on SPK's crypto-asset provider list

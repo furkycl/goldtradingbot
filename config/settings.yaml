@@ -1,6 +1,6 @@
 # Human-owned settings. The self-improvement loop never edits this file.
 
-mode: paper            # paper | live  (live ALSO needs env GOLDBOT_LIVE_CONFIRM, see README)
+mode: paper            # paper | demo (broker demo account) | live (ALSO needs env GOLDBOT_LIVE_CONFIRM)
 broker: paper          # paper | mt5 | ccxt
 symbol: XAUUSD
 starting_equity: 100
@@ -23,6 +23,7 @@ risk:
   max_leverage: 10.0       # SPK limit for Turkish residents; capped at 10 in code
   max_open_positions: 1
   max_trades_per_day: 4
+  max_cost_in_r: 0.05     # refuse live/demo entries on venues that are too expensive
 
 news:
   # verified working 2026-10-04; run `python -m goldbot probe-feeds` to re-check

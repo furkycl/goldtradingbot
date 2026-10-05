@@ -34,6 +34,11 @@ class MT5Broker(Broker):
         )
         if not ok:
             raise RuntimeError(f"MT5 init failed: {mt5.last_error()}")
+        acc = mt5.account_info()
+        is_demo = acc is not None and acc.trade_mode == mt5.ACCOUNT_TRADE_MODE_DEMO
+        if settings.mode == "demo" and not is_demo:
+            mt5.shutdown()
+            raise RuntimeError("mode=demo but the MT5 account is NOT a demo account; refusing to trade")
         info = mt5.symbol_info(self.symbol)
         if info is None or not mt5.symbol_select(self.symbol, True):
             raise RuntimeError(f"symbol {self.symbol} not available at this broker")
