@@ -8,59 +8,59 @@ Random benchmark = same exits, sizing and costs, but random entry times/sides (3
 
 | Instrument / params | Period | Return % | Max DD % | Trades | PF | Random median % | Random 95th % | p-value | Cost 0x/1x/2x/3x % | Neighbours profitable | Buy & hold % |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| GC=F 1h, current params | 2024-05-24 → 2026-10-04 | 50.65 | 11.66 | 356 | 1.5 | 6.83 | 32.54 | 0.0 | 55.75/50.65/43.76/40.37 | 97% | 78.9 |
-| GC=F 1h, original defaults | 2024-05-21 → 2026-10-04 | 33.51 | 9.69 | 299 | 1.21 | 7.11 | 54.62 | 0.147 | 36.29/33.51/17.68/13.75 | 97% | 71.96 |
-| PAXG-USD 1h (no roll gaps), current params | 2024-10-14 → 2026-10-04 | 147.2 | 11.7 | 585 | 1.48 | 17.04 | 69.95 | 0.0 | 161.39/147.2/126.51/96.65 | 97% | 55.34 |
+| GC=F 1h, current params | 2024-05-24 → 2026-10-04 | 63.57 | 7.14 | 433 | 1.49 | 5.75 | 32.21 | 0.0 | 70.13/63.57/54.72/51.23 | 97% | 78.37 |
+| GC=F 1h, original defaults | 2024-05-22 → 2026-10-04 | 33.51 | 9.69 | 299 | 1.21 | 8.32 | 48.87 | 0.13 | 36.29/33.51/17.68/13.75 | 97% | 72.55 |
+| PAXG-USD 1h (no roll gaps), current params | 2024-10-14 → 2026-10-04 | 179.08 | 8.96 | 650 | 1.48 | 19.52 | 78.3 | 0.0 | 200.49/179.08/140.83/115.9 | 97% | 55.71 |
 
 Long vs short P&L ($10k account):
 
-- GC=F 1h, current params: longs 230 trades $4028.97, shorts 126 trades $1036.51
+- GC=F 1h, current params: longs 259 trades $5258.38, shorts 174 trades $1098.22
 - GC=F 1h, original defaults: longs 193 trades $4268.91, shorts 106 trades $-918.2
-- PAXG-USD 1h (no roll gaps), current params: longs 348 trades $11181.54, shorts 237 trades $3538.42
+- PAXG-USD 1h (no roll gaps), current params: longs 383 trades $11900.37, shorts 267 trades $6007.16
 
 ### Same strategy with the costs of venues reachable from Turkey (GC=F 1h, current params)
 
 | Venue | Return % | Max DD % | Trades | PF | Cost per trade (in R) |
 |---|---|---|---|---|---|
-| Global raw CFD (benchmark, not legal in TR) | 52.57 | 11.35 | 356 | 1.52 | 0.005 |
-| SPK-licensed TR CFD via MT5 | 47.11 | 12.81 | 356 | 1.47 | 0.012 |
-| VIOP F_XAUUSD (0.05%/side + fees) | -19.56 | 20.86 | 189 | 0.68 | 0.16 |
-| Token spot, 0.10%/side (PAXG/XAUT) | -20.07 | 20.28 | 127 | 0.44 | 0.299 |
-| Token spot, 0.20%/side | -19.98 | 20.18 | 50 | 0.19 | 0.82 |
+| Global raw CFD (benchmark, not legal in TR) | 66.69 | 6.94 | 434 | 1.51 | 0.005 |
+| SPK-licensed TR CFD via MT5 | 56.68 | 8.49 | 432 | 1.45 | 0.012 |
+| VIOP F_XAUUSD (0.05%/side + fees) | -13.65 | 17.28 | 327 | 0.85 | 0.123 |
+| Token spot, 0.10%/side (PAXG/XAUT) | -7.74 | 11.99 | 164 | 0.83 | 0.249 |
+| Token spot, 0.20%/side | -16.41 | 16.83 | 59 | 0.31 | 0.686 |
 
 ## 2. Daily strategies — GC=F daily as CFD (5%/yr financing) (2001-09-18 → 2026-10-05, cost 3.0 bps/switch, financing 5.0%/yr)
 
 | Strategy | In market % | CAGR % | Max DD % | Sharpe | Calmar | 2000-11 CAGR | 2011-15 bear CAGR / DD | 2016-26 CAGR |
 |---|---|---|---|---|---|---|---|---|
-| Buy & hold | 100.0 | 5.84 | 56.1 | 0.4 | 0.1 | 14.56 | -16.14 / 54.7 | 8.04 |
-| TSMOM 12m long-only | 75.4 | 3.98 | 49.5 | 0.32 | 0.08 | 10.09 | -8.06 / 32.1 | 3.64 |
+| Buy & hold | 100.0 | 5.85 | 56.1 | 0.41 | 0.1 | 14.56 | -16.14 / 54.7 | 8.06 |
+| TSMOM 12m long-only | 75.4 | 3.99 | 49.5 | 0.33 | 0.08 | 10.09 | -8.06 / 32.1 | 3.67 |
 | TSMOM 6m long-only | 71.0 | 4.6 | 34.5 | 0.38 | 0.13 | 9.35 | -8.29 / 32.9 | 5.84 |
 | TSMOM 3m long-only | 64.2 | 3.88 | 36.1 | 0.34 | 0.11 | 5.85 | -8.5 / 34.4 | 7.44 |
-| TSMOM 12m long/short | 100.0 | -1.01 | 84.1 | 0.03 | -0.01 | 4.81 | -8.06 / 38.8 | -3.26 |
+| TSMOM 12m long/short | 100.0 | -1.0 | 84.1 | 0.04 | -0.01 | 4.81 | -8.06 / 38.8 | -3.24 |
 | SMA200 filter | 72.2 | 3.89 | 49.3 | 0.33 | 0.08 | 9.91 | -11.81 / 43.3 | 5.36 |
 | Donchian 55/20 long-only | 40.7 | 0.8 | 41.6 | 0.13 | 0.02 | 2.63 | -8.94 / 34.9 | 3.27 |
 | Donchian 55/20 long/short | 60.9 | -5.46 | 83.0 | -0.32 | -0.07 | -5.49 | -12.26 / 45.6 | -2.55 |
-| TSMOM 12m + vol target 15% | 75.4 | 5.43 | 51.2 | 0.45 | 0.11 | 13.45 | -7.0 / 28.2 | 3.63 |
-| Buy & hold + vol target 15% | 100.0 | 6.25 | 59.6 | 0.46 | 0.1 | 15.51 | -15.72 / 53.4 | 7.97 |
+| TSMOM 12m + vol target 15% | 75.4 | 5.44 | 51.2 | 0.45 | 0.11 | 13.45 | -7.0 / 28.2 | 3.65 |
+| Buy & hold + vol target 15% | 100.0 | 6.25 | 59.6 | 0.46 | 0.1 | 15.51 | -15.72 / 53.4 | 7.99 |
 
-TSMOM 12m vs random timing with the same time in market (0.75): Sharpe 0.32 vs random median 0.34 → better than 39.3% of random runs.
+TSMOM 12m vs random timing with the same time in market (0.75): Sharpe 0.33 vs random median 0.34 → better than 43.3% of random runs.
 
 ## 2. Daily strategies — GC=F daily unlevered (ETF/token/physical, 0.4%/yr fee) (2001-09-18 → 2026-10-05, cost 10.0 bps/switch, financing 0.4%/yr)
 
 | Strategy | In market % | CAGR % | Max DD % | Sharpe | Calmar | 2000-11 CAGR | 2011-15 bear CAGR / DD | 2016-26 CAGR |
 |---|---|---|---|---|---|---|---|---|
-| Buy & hold | 100.0 | 10.82 | 45.3 | 0.66 | 0.24 | 19.95 | -12.19 / 44.9 | 13.12 |
-| TSMOM 12m long-only | 75.4 | 7.23 | 40.6 | 0.52 | 0.18 | 14.72 | -7.17 / 29.3 | 6.77 |
+| Buy & hold | 100.0 | 10.83 | 45.3 | 0.66 | 0.24 | 19.95 | -12.19 / 44.9 | 13.15 |
+| TSMOM 12m long-only | 75.4 | 7.24 | 40.6 | 0.52 | 0.18 | 14.72 | -7.17 / 29.3 | 6.79 |
 | TSMOM 6m long-only | 71.0 | 7.53 | 31.8 | 0.56 | 0.24 | 13.15 | -7.56 / 30.6 | 9.02 |
 | TSMOM 3m long-only | 64.2 | 6.04 | 33.4 | 0.48 | 0.18 | 8.37 | -7.87 / 33.4 | 9.97 |
-| TSMOM 12m long/short | 100.0 | 2.86 | 72.7 | 0.25 | 0.04 | 9.19 | -4.45 / 35.1 | 0.28 |
+| TSMOM 12m long/short | 100.0 | 2.87 | 72.7 | 0.25 | 0.04 | 9.19 | -4.45 / 35.1 | 0.3 |
 | SMA200 filter | 72.2 | 6.84 | 42.5 | 0.51 | 0.16 | 14.09 | -11.34 / 42.0 | 8.39 |
 | Donchian 55/20 long-only | 40.7 | 2.38 | 35.9 | 0.26 | 0.07 | 4.45 | -8.55 / 33.7 | 5.19 |
 | Donchian 55/20 long/short | 60.9 | -3.31 | 73.0 | -0.16 | -0.05 | -3.48 | -10.45 / 43.6 | -0.12 |
-| TSMOM 12m + vol target 15% | 75.4 | 8.35 | 42.3 | 0.65 | 0.2 | 17.74 | -6.36 / 26.0 | 6.41 |
-| Buy & hold + vol target 15% | 100.0 | 10.88 | 45.8 | 0.73 | 0.24 | 20.24 | -12.28 / 44.7 | 13.07 |
+| TSMOM 12m + vol target 15% | 75.4 | 8.36 | 42.3 | 0.65 | 0.2 | 17.74 | -6.36 / 26.0 | 6.43 |
+| Buy & hold + vol target 15% | 100.0 | 10.89 | 45.8 | 0.73 | 0.24 | 20.24 | -12.28 / 44.7 | 13.09 |
 
-TSMOM 12m vs random timing with the same time in market (0.75): Sharpe 0.52 vs random median 0.54 → better than 38.3% of random runs.
+TSMOM 12m vs random timing with the same time in market (0.75): Sharpe 0.52 vs random median 0.54 → better than 38.0% of random runs.
 
 ## 3. What would $100 → $1,000,000 (10,000×) take?
 
@@ -90,8 +90,8 @@ Block-bootstrap Monte Carlo (20-day blocks, 4,000 paths, 10 years) of daily stra
 
 | Leverage | Median 10y multiple | Median CAGR % | P(10,000× in 10y) % | P(≥50% drawdown) % | P(ruin) % | Years to 10,000× at median |
 |---|---|---|---|---|---|---|
-| 1× | 4.4 | 16.0 | 0.0 | 0.0 | 0.0 | 62.0 |
-| 2× | 17.07 | 32.8 | 0.0 | 0.0 | 0.0 | 32.0 |
-| 3× | 64.89 | 51.8 | 0.0 | 0.2 | 0.0 | 22.0 |
-| 5× | 650.64 | 91.1 | 1.73 | 13.6 | 0.0 | 14.0 |
+| 1× | 6.03 | 19.7 | 0.0 | 0.0 | 0.0 | 51.0 |
+| 2× | 31.94 | 41.4 | 0.0 | 0.0 | 0.0 | 27.0 |
+| 3× | 157.42 | 65.8 | 0.0 | 0.0 | 0.0 | 18.0 |
+| 5× | 2747.43 | 120.7 | 17.38 | 5.8 | 0.0 | 12.0 |
 
