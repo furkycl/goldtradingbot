@@ -12,6 +12,8 @@ import logging
 import os
 import threading
 import time
+
+import pandas as pd
 from datetime import datetime, timezone
 
 from .brokers import make_broker
@@ -58,17 +60,21 @@ class Engine:
             return "not enough data"
         if isinstance(self.broker, PaperBroker):
             self.broker.set_last(float(df["close"].iloc[-1]))
-            self.broker.check_stops(float(df["high"].iloc[-1]), float(df["low"].iloc[-1]))
 
         bar_time = df.index[-1]
         if bar_time == self.last_bar:
             return "no new bar"
         self.last_bar = bar_time
+        if isinstance(self.broker, PaperBroker):
+            # simulate broker-side SL/TP over the bar that just CLOSED (same as backtest)
+            done = df.iloc[-2]
+            self.broker.check_stops(float(done["high"]), float(done["low"]), float(done["open"]))
         data = prepare(df, self.p)
         row = data.iloc[-2]  # last CLOSED bar
         now = datetime.now(timezone.utc)
         eq = self.broker.equity()
-        self.rm.on_new_bar(now.date(), eq)
+        self.rm.on_new_bar(pd.Timestamp(bar_time).tz_convert("UTC").date()
+                           if pd.Timestamp(bar_time).tzinfo else pd.Timestamp(bar_time).date(), eq)
 
         positions = self.broker.positions()
         for pos in positions:
@@ -114,17 +120,18 @@ class Engine:
             self.broker.close(pos.id)
             notify(f"STOP hit {pos.id} @ {px:.2f}")
             return
-        # time stop: same rule as the backtest
+        # time stop: same rule as the backtest (closed bars only, decided on the closed bar)
+        close = float(row["close"])
         if self.p.max_hold_bars and pos.opened_at and df is not None and pos.entry:
-            import pandas as pd
-            held = int((df.index > pd.Timestamp(pos.opened_at)).sum())
-            if held >= self.p.max_hold_bars and pos.side * (px - pos.entry) < 0.5 * float(row["atr"]):
+            held = int((df.index[:-1] >= pd.Timestamp(pos.opened_at)).sum())
+            if held >= self.p.max_hold_bars and pos.side * (close - pos.entry) < 0.5 * float(row["atr"]):
                 self.broker.close(pos.id)
                 notify(f"TIME STOP {pos.id} after {held} bars @ {px:.2f}")
                 return
-        risk = abs(pos.entry - pos.stop) if pos.entry else 0
-        if risk and pos.side * (px - pos.entry) >= risk:
-            new_stop = round(px - pos.side * self.p.trail_atr_mult * float(row["atr"]), 2)
+        # trailing: same rule as the backtest (initial risk, closed-bar price)
+        risk = pos.initial_risk or (abs(pos.entry - pos.stop) if pos.entry else 0)
+        if risk and pos.entry and pos.side * (close - pos.entry) >= risk:
+            new_stop = round(close - pos.side * self.p.trail_atr_mult * float(row["atr"]), 2)
             if pos.side * (new_stop - pos.stop) > 0:
                 if self.broker.modify_stop(pos.id, new_stop):
                     log.info("trail %s stop %.2f -> %.2f", pos.id, pos.stop, new_stop)

@@ -8,6 +8,7 @@ starting_equity: 100
 # cost assumptions for paper/backtest (set to your broker's real values)
 commission_per_lot: 7.0   # USD round turn per 100 oz lot
 spread: 0.30              # USD per oz
+financing_pct_per_year: 5.0  # overnight swap on CFD notional; 0 for spot tokens
 contract_size: 100        # oz per lot (MT5/ccxt adapters overwrite from the broker)
 min_lot: 0.01
 lot_step: 0.01

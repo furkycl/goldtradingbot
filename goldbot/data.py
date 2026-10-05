@@ -25,7 +25,10 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"missing OHLC columns: {missing}")
     df = df[OHLC + [c for c in ("volume",) if c in df.columns]].astype(float)
-    return df.sort_index().dropna()
+    if isinstance(df.index, pd.DatetimeIndex):
+        df.index = df.index.tz_localize("UTC") if df.index.tz is None else df.index.tz_convert("UTC")
+    df = df[(df["high"] >= df["low"]) & (df["close"] > 0)]
+    return df[~df.index.duplicated(keep="last")].sort_index().dropna()
 
 
 def load_csv(path: str | Path) -> pd.DataFrame:

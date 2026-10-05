@@ -1,0 +1,13 @@
+# Human-owned. The self-improvement loop never edits this file.
+#
+# Every bar from holdout_start onward is SEALED: the optimizer and the variant
+# study never see it. A parameter change is only accepted if it also beats the
+# current params on this unseen data by holdout_margin, and only once at least
+# holdout_min_bars of it exist. Until then the weekly loop just reports the
+# forward (out-of-sample) performance of the current params.
+#
+# All data before 2026-10-05 was used for research/selection at least once, so
+# it cannot serve as a clean test any more.
+holdout_start: "2026-10-05"
+holdout_min_bars: 1000
+holdout_margin: 0.15

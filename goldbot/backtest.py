@@ -4,6 +4,9 @@
 - Spread charged on entry and exit; commission per lot round turn.
 - Intrabar stop/TP: if both are touched in the same bar, the stop is assumed
   first (pessimistic).
+- Overnight financing charged on open notional (settings.financing_pct_per_year).
+- `trade_from`: no signals before this timestamp and stats start there, so
+  warm-up bars can never leak in-sample trades into out-of-sample results.
 - Uses the same RiskManager as live trading.
 """
 from __future__ import annotations
@@ -80,8 +83,14 @@ SentimentFn = Callable[[pd.Timestamp], float]
 
 
 def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
-                 sentiment_fn: SentimentFn | None = None) -> BacktestResult:
+                 sentiment_fn: SentimentFn | None = None,
+                 trade_from: pd.Timestamp | None = None,
+                 entry_fn: Callable[[int, pd.Timestamp], int] | None = None) -> BacktestResult:
+    """entry_fn(i, ts) -> side overrides the strategy signal (used for random-entry
+    benchmarks: same exits, sizing and costs, random entries)."""
     data = prepare(df, params)
+    start_i = 0 if trade_from is None else int(data.index.searchsorted(pd.Timestamp(trade_from)))
+    fin_rate = getattr(settings, "financing_pct_per_year", 0.0) / 100
     rm = RiskManager(settings.risk, settings.contract_size, settings.min_lot,
                      settings.lot_step, settings.starting_equity)
     cash = settings.starting_equity
@@ -104,8 +113,12 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
         trades.append(t)
         return t.pnl
 
+    secs = np.diff(idx.asi8) / 1e9 if len(idx) > 1 else np.array([])
     for i in range(len(data)):
         ts = idx[i]
+        # 0) financing on positions held from the previous bar
+        if pos is not None and fin_rate and i > 0:
+            cash -= pos.lots * settings.contract_size * c[i - 1] * fin_rate * secs[i - 1] / (365 * 86400)
         # 1) execute pending entry at this bar's open
         if pending is not None and pos is None:
             sig = pending
@@ -152,16 +165,34 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
         rm.on_new_bar(ts.date(), mtm)
 
         # 4) new signal on close
-        if i >= warmup_bars(params) and pos is None and pending is None:
+        if i >= max(warmup_bars(params), start_i) and pos is None and pending is None and i < len(data) - 1:
             ok, _ = rm.can_trade(0)
             if ok:
-                sent = sentiment_fn(ts) if sentiment_fn else 0.0
-                sig = signal_at(data.iloc[i], params, sent)
-                if sig.side != 0 and not (settings.long_only and sig.side < 0):
+                if entry_fn is not None:
+                    side = entry_fn(i, ts)
+                    sig = _forced_signal(data.iloc[i], params, side) if side else None
+                else:
+                    sent = sentiment_fn(ts) if sentiment_fn else 0.0
+                    sig = signal_at(data.iloc[i], params, sent)
+                if sig is not None and sig.side != 0 and not (settings.long_only and sig.side < 0):
                     pending = sig
 
     if pos is not None:
         cash += close_pos(pos, c[-1], idx[-1], "end_of_data")
         equity_curve[-1] = cash
 
-    return BacktestResult(pd.Series(equity_curve, index=idx), trades, skipped, rm.state.history)
+    eq = pd.Series(equity_curve, index=idx)
+    if start_i:
+        eq = eq.iloc[max(0, start_i - 1):]
+    return BacktestResult(eq, trades, skipped, rm.state.history)
+
+
+def _forced_signal(row, params: StrategyParams, side: int):
+    from .strategy import Signal
+    a = float(row["atr"])
+    if not a or np.isnan(a):
+        return None
+    close = float(row["close"])
+    stop = close - side * params.atr_stop_mult * a
+    tp = close + side * params.atr_stop_mult * a * params.take_profit_r
+    return Signal(side, close, stop, tp, a, "random")

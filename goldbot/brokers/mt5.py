@@ -40,6 +40,16 @@ class MT5Broker(Broker):
         settings.contract_size = info.trade_contract_size
         settings.min_lot = info.volume_min
         settings.lot_step = info.volume_step
+        # initial risk per ticket survives restarts (MT5 only stores the CURRENT stop)
+        from ..config import ROOT
+        import json
+        self._risk_path = ROOT / "state" / "mt5_risk.json"
+        self._risk = json.loads(self._risk_path.read_text()) if self._risk_path.exists() else {}
+
+    def _save_risk(self) -> None:
+        import json
+        self._risk_path.parent.mkdir(exist_ok=True)
+        self._risk_path.write_text(json.dumps(self._risk))
 
     def equity(self) -> float:
         return float(self.mt5.account_info().equity)
@@ -61,7 +71,8 @@ class MT5Broker(Broker):
                 continue
             side = 1 if p.type == self.mt5.POSITION_TYPE_BUY else -1
             opened = pd.Timestamp(p.time, unit="s", tz="UTC").isoformat()
-            out.append(Position(str(p.ticket), side, p.volume, p.price_open, p.sl, p.tp, opened))
+            out.append(Position(str(p.ticket), side, p.volume, p.price_open, p.sl, p.tp, opened,
+                                self._risk.get(str(p.ticket), 0.0)))
         return out
 
     def open(self, side: int, lots: float, stop: float, take_profit: float) -> OrderResult:
@@ -78,7 +89,10 @@ class MT5Broker(Broker):
         r = self.mt5.order_send(req)
         if r is None or r.retcode != self.mt5.TRADE_RETCODE_DONE:
             return OrderResult(False, message=f"order failed: {getattr(r, 'comment', self.mt5.last_error())}")
-        return OrderResult(True, Position(str(r.order), side, lots, r.price, stop, take_profit))
+        self._risk[str(r.order)] = abs(r.price - stop)
+        self._save_risk()
+        return OrderResult(True, Position(str(r.order), side, lots, r.price, stop, take_profit,
+                                          pd.Timestamp.now(tz="UTC").isoformat(), abs(r.price - stop)))
 
     def modify_stop(self, position_id: str, new_stop: float) -> bool:
         pos = next((p for p in self.positions() if p.id == position_id), None)

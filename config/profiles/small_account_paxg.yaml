@@ -14,6 +14,7 @@ long_only: true
 
 commission_per_lot: 8.0   # ~0.1% per side x 2 on a ~$4,000 token; adjust to the real price/fee
 spread: 1.0               # USD per token, typical for PAXG books; check live
+financing_pct_per_year: 0.0  # spot token: no swap
 contract_size: 1          # 1 token ~ 1 troy oz
 min_lot: 0.0001
 lot_step: 0.0001
