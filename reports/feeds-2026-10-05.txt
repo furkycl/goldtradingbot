@@ -1,12 +1,10 @@
-ok                     newest     0.2h  https://www.financialjuice.com/feed.ashx?xy=rss
-ok                     newest     3.2h  https://investinglive.com/feed/news
-ok                     newest     3.0h  https://www.investing.com/rss/news_95.rss
-ok                     newest     0.6h  https://www.fxstreet.com/rss/news
-ok                     newest     0.1h  https://www.investing.com/rss/news_11.rss
-ok                     newest   455.2h  https://www.federalreserve.gov/feeds/press_monetary.xml
-ok                     newest    68.5h  https://www.federalreserve.gov/feeds/press_all.xml
-ok                     newest     9.2h  https://www.ecb.europa.eu/rss/press.html
-EMPTY (http 403)       newest        -  https://www.bls.gov/feed/cpi.rss
-EMPTY (http 403)       newest        -  https://www.bls.gov/feed/empsit.rss
-ok                     newest     0.2h  https://feeds.content.dowjones.io/public/rss/mw_topstories
-ok                     newest     0.5h  https://www.bloomberght.com/rss
+ok                     newest     0.0h  https://www.financialjuice.com/feed.ashx?xy=rss
+ok                     newest     4.2h  https://investinglive.com/feed/news
+ok                     newest     4.0h  https://www.investing.com/rss/news_95.rss
+ok                     newest     1.7h  https://www.fxstreet.com/rss/news
+ok                     newest     1.2h  https://www.investing.com/rss/news_11.rss
+ok                     newest   456.3h  https://www.federalreserve.gov/feeds/press_monetary.xml
+ok                     newest    69.6h  https://www.federalreserve.gov/feeds/press_all.xml
+ok                     newest    10.3h  https://www.ecb.europa.eu/rss/press.html
+ok                     newest     0.4h  https://feeds.content.dowjones.io/public/rss/mw_topstories
+ok                     newest     0.6h  https://www.bloomberght.com/rss
