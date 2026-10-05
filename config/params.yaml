@@ -1,4 +1,9 @@
 # auto-tuned 2026-10-04: OOS median score 0.8778 -> 1.6378
+# 2026-10-05 (human): strategies breakout -> breakout+squeeze. Evidence in
+# reports/strategies-2026-10-05.md: squeeze alone p=0.007 vs random entries with
+# UNTUNED defaults; the pair beat breakout alone in all 4 walk-forward folds
+# (PF 1.58, p=0.000, PF 1.51 at 2x costs). Selected on research data, so the
+# forward test (weekly self-improve report) is the real verdict.
 timeframe: 1h
 ema_fast: 50
 ema_slow: 150
@@ -15,3 +20,7 @@ daily_trend_days: 0
 session_start_utc: -1
 session_end_utc: -1
 max_hold_bars: 12
+strategies: [breakout, squeeze]
+ensemble_lookback: 30
+ensemble_min_score: -0.3
+risk_vol_scaling: false
