@@ -19,7 +19,7 @@ import pandas as pd
 
 from .config import Settings, StrategyParams
 from .risk import RiskManager
-from .strategy import prepare, signal_at, warmup_bars
+from .strategy import Selector, families, prepare, signal_at, warmup_bars
 
 
 @dataclass
@@ -36,6 +36,13 @@ class Trade:
     pnl: float = 0.0
     reason: str = ""
     entry_bar: int = 0
+    strategy: str = ""
+    hard_exit_bars: int = 0
+
+    @property
+    def r_multiple(self) -> float:
+        risk_usd = self.initial_risk * self.lots
+        return self.pnl / risk_usd if risk_usd else 0.0
 
 
 @dataclass
@@ -105,12 +112,17 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
     o, h, lo, c = (data[k].to_numpy() for k in ("open", "high", "low", "close"))
     atr_v = data["atr"].to_numpy()
 
+    selector = Selector(families(params), params.ensemble_lookback, params.ensemble_min_score)
+    median_atr = float(data["atr"].dropna().median()) if data["atr"].notna().any() else 0.0
+
     def close_pos(t: Trade, price: float, when, reason: str) -> float:
         fill = price - t.side * half_spread
         gross = t.side * (fill - t.entry) * t.lots * settings.contract_size
         t.exit, t.exit_time, t.reason = fill, when, reason
         t.pnl = gross - settings.commission_per_lot * t.lots
         trades.append(t)
+        risk_usd = t.initial_risk * t.lots * settings.contract_size
+        selector.update(t.strategy, t.pnl / risk_usd if risk_usd else 0.0)
         return t.pnl
 
     secs = np.diff(idx.asi8) / 1e9 if len(idx) > 1 else np.array([])
@@ -127,9 +139,10 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
             stop_dist = abs(sig.entry_ref - sig.stop)
             stop = entry - sig.side * stop_dist
             tp = entry + sig.side * stop_dist * params.take_profit_r
-            lots = rm.size_position(cash, entry, stop)
+            lots = rm.size_position(cash, entry, stop, risk_scale(params, median_atr, atr_v[i]))
             if lots > 0:
-                pos = Trade(sig.side, lots, ts, entry, stop, tp, stop_dist, entry_bar=i)
+                pos = Trade(sig.side, lots, ts, entry, stop, tp, stop_dist, entry_bar=i,
+                            strategy=sig.strategy, hard_exit_bars=sig.hard_exit_bars)
                 rm.on_trade_opened()
             else:
                 skipped += 1
@@ -144,6 +157,9 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
                 pos = None
             elif hit_tp:
                 cash += close_pos(pos, pos.take_profit, ts, "take_profit")
+                pos = None
+            elif pos.hard_exit_bars and i - pos.entry_bar >= pos.hard_exit_bars:
+                cash += close_pos(pos, c[i], ts, "hard_exit")
                 pos = None
             elif (params.max_hold_bars and i - pos.entry_bar >= params.max_hold_bars
                   and pos.side * (c[i] - pos.entry) < 0.5 * atr_v[i]):
@@ -173,7 +189,7 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
                     sig = _forced_signal(data.iloc[i], params, side) if side else None
                 else:
                     sent = sentiment_fn(ts) if sentiment_fn else 0.0
-                    sig = signal_at(data.iloc[i], params, sent)
+                    sig = signal_at(data.iloc[i], params, sent, selector)
                 if sig is not None and sig.side != 0 and not (settings.long_only and sig.side < 0):
                     pending = sig
 
@@ -187,6 +203,14 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
     return BacktestResult(eq, trades, skipped, rm.state.history)
 
 
+def risk_scale(params: StrategyParams, median_atr: float, atr_now: float) -> float:
+    """Volatility-scaled risk: trade smaller when ATR is far above its median
+    (Harvey et al.: cuts tails, little effect on Sharpe for commodities)."""
+    if not params.risk_vol_scaling or not median_atr or not atr_now or np.isnan(atr_now):
+        return 1.0
+    return float(np.clip(median_atr / atr_now, 0.5, 1.5))
+
+
 def _forced_signal(row, params: StrategyParams, side: int):
     from .strategy import Signal
     a = float(row["atr"])
@@ -195,4 +219,4 @@ def _forced_signal(row, params: StrategyParams, side: int):
     close = float(row["close"])
     stop = close - side * params.atr_stop_mult * a
     tp = close + side * params.atr_stop_mult * a * params.take_profit_r
-    return Signal(side, close, stop, tp, a, "random")
+    return Signal(side, close, stop, tp, a, "random", "random")

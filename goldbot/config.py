@@ -77,6 +77,21 @@ class StrategyParams:
     session_start_utc: int = -1          # allow new entries only between these UTC hours
     session_end_utc: int = -1
     max_hold_bars: int = 0               # exit trades not yet +0.5 ATR after N bars
+    # --- strategy library / ensemble (goldbot/strategies). Each family has its
+    # own entry logic; exits, sizing and risk limits are shared. The selector
+    # picks, per bar, the family with the best recent realised R (EWMA).
+    strategies: list[str] = field(default_factory=lambda: ["breakout"])
+    ensemble_lookback: int = 30          # trades of memory in the EWMA score
+    ensemble_min_score: float = -0.3     # families scoring below this are benched
+    squeeze_lookback: int = 100          # bars for the Bollinger-width percentile
+    squeeze_pct: float = 0.25            # width must be in the lowest X of lookback
+    spike_mult: float = 3.0              # bar range >= X * ATR = "news spike"
+    spike_mode: str = "fade"             # fade | follow the spike (Smales 2015: overreaction)
+    meanrev_bb: float = 2.0              # Bollinger sigma for mean reversion
+    meanrev_adx_max: float = 18.0        # mean reversion only in non-trending regime
+    overnight_start_utc: int = 22        # Asian-session long (Blose & Gondhalekar 2014)
+    overnight_bars: int = 9              # hard exit after N bars (before London/NY)
+    risk_vol_scaling: bool = False       # scale risk% by median ATR / current ATR (0.5-1.5x)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "StrategyParams":
