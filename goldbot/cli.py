@@ -5,6 +5,9 @@
   news                                          print current headlines + sentiment
   probe-feeds                                   check RSS feeds are alive and fresh
   run                                           start paper / demo / live trading
+  status [--mode M]                             forward-test results vs go-live checklist
+  report [--mode M]                             HTML report (equity curve, trades)
+  core                                          unlevered core-holding signal (daily trend)
   reset-halt                                    clear the kill switch after a human review
 """
 from __future__ import annotations
@@ -37,6 +40,11 @@ def main(argv=None) -> None:
     sub.add_parser("news")
     sub.add_parser("probe-feeds", help="check every RSS feed is reachable and fresh")
     sub.add_parser("run")
+    sp = sub.add_parser("status", help="forward-test results vs go-live criteria")
+    sp.add_argument("--mode", choices=["paper", "demo", "live"], help="default: all present")
+    sp = sub.add_parser("report", help="write state/<mode>/report.html")
+    sp.add_argument("--mode", choices=["paper", "demo", "live"], default="paper")
+    sub.add_parser("core", help="unlevered core-holding signal (daily gold trend)")
     sub.add_parser("reset-halt", help="clear a drawdown/daily halt after reviewing what happened")
     args = ap.parse_args(argv)
 
@@ -78,6 +86,30 @@ def main(argv=None) -> None:
         fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
         logging.getLogger().addHandler(fh)
         Engine(settings, params).run()
+    elif args.cmd == "status":
+        from .config import ROOT
+        from .forward import checklist, evaluate_journal, render_status
+        modes = [args.mode] if args.mode else ["paper", "demo", "live"]
+        found = False
+        for m in modes:
+            folder = ROOT / "state" / m
+            if (folder / "journal.csv").exists() or (folder / "equity.csv").exists():
+                found = True
+                met = evaluate_journal(folder)
+                print(render_status(met, checklist(met)))
+                risk = folder / "risk.json"
+                if risk.exists():
+                    print("  risk state:", json.loads(risk.read_text()).get("halted_reason") or "no halt")
+        if not found:
+            print("no forward-test data yet — start with: python -m goldbot run")
+    elif args.cmd == "report":
+        from .config import ROOT
+        from .forward import html_report
+        print("written:", html_report(ROOT / "state" / args.mode))
+    elif args.cmd == "core":
+        from . import data as data_mod
+        from .core import core_signal
+        print(json.dumps(core_signal(data_mod.load_yfinance("GC=F", "5y", "1d")["close"]), indent=2))
     elif args.cmd == "reset-halt":
         from .config import ROOT
         from .engine import mode_name

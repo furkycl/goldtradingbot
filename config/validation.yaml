@@ -11,3 +11,11 @@
 holdout_start: "2026-10-05"
 holdout_min_bars: 1000
 holdout_margin: 0.15
+
+# Go-live criteria for the forward test (paper or broker demo), see docs/STRATEGY.md.
+# `python -m goldbot status` checks the journal against these.
+go_live:
+  min_trades: 100
+  min_profit_factor: 1.2
+  max_drawdown_pct: 15.0
+  min_days: 60
