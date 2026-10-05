@@ -1,0 +1,1667 @@
+{
+ "date": "2026-10-05",
+ "hourly": [
+  {
+   "label": "GC=F 1h, current params",
+   "params": {
+    "timeframe": "1h",
+    "ema_fast": 50,
+    "ema_slow": 150,
+    "breakout_lookback": 12,
+    "atr_period": 14,
+    "atr_stop_mult": 3.0,
+    "take_profit_r": 2.0,
+    "trail_atr_mult": 3.0,
+    "news_weight": 0.5,
+    "news_veto_threshold": 0.4,
+    "adx_period": 14,
+    "adx_min": 0.0,
+    "daily_trend_days": 0,
+    "session_start_utc": -1,
+    "session_end_utc": -1,
+    "max_hold_bars": 12
+   },
+   "period": "2024-05-24 \u2192 2026-10-05",
+   "stats": {
+    "start_equity": 10000.0,
+    "end_equity": 15083.88,
+    "return_pct": 50.84,
+    "max_drawdown_pct": 11.66,
+    "trades": 356,
+    "win_rate_pct": 49.7,
+    "profit_factor": 1.51,
+    "sharpe": 1.8,
+    "skipped_below_min_lot": 16,
+    "halts": []
+   },
+   "long_pnl": 4028.97,
+   "short_pnl": 1054.91,
+   "n_long": 230,
+   "n_short": 126,
+   "random": {
+    "median_return_pct": 6.53,
+    "p95_return_pct": 32.55,
+    "median_pf": 1.07,
+    "real_percentile": 100.0,
+    "p_value": 0.0
+   },
+   "cost_stress_return_pct": {
+    "0x": 55.94,
+    "1x": 50.84,
+    "2x": 43.94,
+    "3x": 40.56
+   },
+   "neighbourhood_positive_frac": 0.97,
+   "neighbourhood": [
+    {
+     "param": "ema_fast",
+     "value": 10,
+     "return_pct": 46.09,
+     "pf": 1.43
+    },
+    {
+     "param": "ema_fast",
+     "value": 20,
+     "return_pct": 39.46,
+     "pf": 1.38
+    },
+    {
+     "param": "ema_fast",
+     "value": 30,
+     "return_pct": 48.77,
+     "pf": 1.46
+    },
+    {
+     "param": "ema_slow",
+     "value": 100,
+     "return_pct": 49.7,
+     "pf": 1.51
+    },
+    {
+     "param": "ema_slow",
+     "value": 200,
+     "return_pct": 30.32,
+     "pf": 1.31
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 24,
+     "return_pct": 35.11,
+     "pf": 1.44
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 36,
+     "return_pct": 25.01,
+     "pf": 1.35
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 48,
+     "return_pct": 22.42,
+     "pf": 1.33
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 72,
+     "return_pct": 28.66,
+     "pf": 1.5
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 1.5,
+     "return_pct": -18.66,
+     "pf": 0.52
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 2.0,
+     "return_pct": 75.9,
+     "pf": 1.36
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 2.5,
+     "return_pct": 58.41,
+     "pf": 1.41
+    },
+    {
+     "param": "take_profit_r",
+     "value": 1.5,
+     "return_pct": 53.68,
+     "pf": 1.48
+    },
+    {
+     "param": "take_profit_r",
+     "value": 2.5,
+     "return_pct": 56.43,
+     "pf": 1.59
+    },
+    {
+     "param": "take_profit_r",
+     "value": 3.0,
+     "return_pct": 64.58,
+     "pf": 1.67
+    },
+    {
+     "param": "take_profit_r",
+     "value": 4.0,
+     "return_pct": 53.6,
+     "pf": 1.64
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 2.0,
+     "return_pct": 58.16,
+     "pf": 1.53
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 2.5,
+     "return_pct": 52.97,
+     "pf": 1.51
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 3.5,
+     "return_pct": 54.06,
+     "pf": 1.51
+    },
+    {
+     "param": "adx_min",
+     "value": 15.0,
+     "return_pct": 28.18,
+     "pf": 1.29
+    },
+    {
+     "param": "adx_min",
+     "value": 18.0,
+     "return_pct": 40.32,
+     "pf": 1.48
+    },
+    {
+     "param": "adx_min",
+     "value": 22.0,
+     "return_pct": 22.11,
+     "pf": 1.34
+    },
+    {
+     "param": "adx_min",
+     "value": 25.0,
+     "return_pct": 18.51,
+     "pf": 1.35
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 0,
+     "return_pct": 31.22,
+     "pf": 1.26
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 24,
+     "return_pct": 48.37,
+     "pf": 1.43
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 48,
+     "return_pct": 39.58,
+     "pf": 1.33
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 20,
+     "return_pct": 48.49,
+     "pf": 1.66
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 60,
+     "return_pct": 39.15,
+     "pf": 1.67
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 120,
+     "return_pct": 33.13,
+     "pf": 1.65
+    }
+   ],
+   "buy_hold_return_pct": 79.5
+  },
+  {
+   "label": "GC=F 1h, original defaults",
+   "params": {
+    "timeframe": "1h",
+    "ema_fast": 20,
+    "ema_slow": 100,
+    "breakout_lookback": 24,
+    "atr_period": 14,
+    "atr_stop_mult": 2.0,
+    "take_profit_r": 2.0,
+    "trail_atr_mult": 2.5,
+    "news_weight": 0.5,
+    "news_veto_threshold": 0.4,
+    "adx_period": 14,
+    "adx_min": 18.0,
+    "daily_trend_days": 0,
+    "session_start_utc": -1,
+    "session_end_utc": -1,
+    "max_hold_bars": 0
+   },
+   "period": "2024-05-21 \u2192 2026-10-05",
+   "stats": {
+    "start_equity": 10000.0,
+    "end_equity": 13350.71,
+    "return_pct": 33.51,
+    "max_drawdown_pct": 9.69,
+    "trades": 299,
+    "win_rate_pct": 40.5,
+    "profit_factor": 1.21,
+    "sharpe": 0.99,
+    "skipped_below_min_lot": 1,
+    "halts": []
+   },
+   "long_pnl": 4268.91,
+   "short_pnl": -918.2,
+   "n_long": 193,
+   "n_short": 106,
+   "random": {
+    "median_return_pct": 7.1,
+    "p95_return_pct": 51.53,
+    "median_pf": 1.05,
+    "real_percentile": 85.0,
+    "p_value": 0.15
+   },
+   "cost_stress_return_pct": {
+    "0x": 36.29,
+    "1x": 33.51,
+    "2x": 17.68,
+    "3x": 13.75
+   },
+   "neighbourhood_positive_frac": 0.97,
+   "neighbourhood": [
+    {
+     "param": "ema_fast",
+     "value": 10,
+     "return_pct": 19.17,
+     "pf": 1.12
+    },
+    {
+     "param": "ema_fast",
+     "value": 30,
+     "return_pct": 33.57,
+     "pf": 1.21
+    },
+    {
+     "param": "ema_fast",
+     "value": 50,
+     "return_pct": 23.27,
+     "pf": 1.16
+    },
+    {
+     "param": "ema_slow",
+     "value": 150,
+     "return_pct": 24.78,
+     "pf": 1.17
+    },
+    {
+     "param": "ema_slow",
+     "value": 200,
+     "return_pct": 16.42,
+     "pf": 1.12
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 12,
+     "return_pct": 17.01,
+     "pf": 1.1
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 36,
+     "return_pct": 27.79,
+     "pf": 1.2
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 48,
+     "return_pct": 21.55,
+     "pf": 1.17
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 72,
+     "return_pct": 30.6,
+     "pf": 1.26
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 1.5,
+     "return_pct": -17.78,
+     "pf": 0.4
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 2.5,
+     "return_pct": 40.14,
+     "pf": 1.33
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 3.0,
+     "return_pct": 21.43,
+     "pf": 1.2
+    },
+    {
+     "param": "take_profit_r",
+     "value": 1.5,
+     "return_pct": 20.64,
+     "pf": 1.13
+    },
+    {
+     "param": "take_profit_r",
+     "value": 2.5,
+     "return_pct": 23.06,
+     "pf": 1.16
+    },
+    {
+     "param": "take_profit_r",
+     "value": 3.0,
+     "return_pct": 31.45,
+     "pf": 1.23
+    },
+    {
+     "param": "take_profit_r",
+     "value": 4.0,
+     "return_pct": 47.8,
+     "pf": 1.35
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 2.0,
+     "return_pct": 36.37,
+     "pf": 1.22
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 3.0,
+     "return_pct": 27.28,
+     "pf": 1.17
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 3.5,
+     "return_pct": 31.78,
+     "pf": 1.19
+    },
+    {
+     "param": "adx_min",
+     "value": 0.0,
+     "return_pct": 40.41,
+     "pf": 1.22
+    },
+    {
+     "param": "adx_min",
+     "value": 15.0,
+     "return_pct": 34.01,
+     "pf": 1.2
+    },
+    {
+     "param": "adx_min",
+     "value": 22.0,
+     "return_pct": 12.65,
+     "pf": 1.1
+    },
+    {
+     "param": "adx_min",
+     "value": 25.0,
+     "return_pct": 15.1,
+     "pf": 1.14
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 12,
+     "return_pct": 29.77,
+     "pf": 1.22
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 24,
+     "return_pct": 21.77,
+     "pf": 1.15
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 48,
+     "return_pct": 25.87,
+     "pf": 1.17
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 20,
+     "return_pct": 46.86,
+     "pf": 1.42
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 60,
+     "return_pct": 42.25,
+     "pf": 1.45
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 120,
+     "return_pct": 35.88,
+     "pf": 1.41
+    }
+   ],
+   "buy_hold_return_pct": 72.54
+  },
+  {
+   "label": "PAXG-USD 1h (no roll gaps), current params",
+   "params": {
+    "timeframe": "1h",
+    "ema_fast": 50,
+    "ema_slow": 150,
+    "breakout_lookback": 12,
+    "atr_period": 14,
+    "atr_stop_mult": 3.0,
+    "take_profit_r": 2.0,
+    "trail_atr_mult": 3.0,
+    "news_weight": 0.5,
+    "news_veto_threshold": 0.4,
+    "adx_period": 14,
+    "adx_min": 0.0,
+    "daily_trend_days": 0,
+    "session_start_utc": -1,
+    "session_end_utc": -1,
+    "max_hold_bars": 12
+   },
+   "period": "2024-10-14 \u2192 2026-10-05",
+   "stats": {
+    "start_equity": 10000.0,
+    "end_equity": 24719.96,
+    "return_pct": 147.2,
+    "max_drawdown_pct": 11.7,
+    "trades": 585,
+    "win_rate_pct": 45.3,
+    "profit_factor": 1.48,
+    "sharpe": 2.17,
+    "skipped_below_min_lot": 0,
+    "halts": []
+   },
+   "long_pnl": 11181.54,
+   "short_pnl": 3538.42,
+   "n_long": 348,
+   "n_short": 237,
+   "random": {
+    "median_return_pct": 17.79,
+    "p95_return_pct": 73.5,
+    "median_pf": 1.09,
+    "real_percentile": 100.0,
+    "p_value": 0.0
+   },
+   "cost_stress_return_pct": {
+    "0x": 161.39,
+    "1x": 147.2,
+    "2x": 126.51,
+    "3x": 96.65
+   },
+   "neighbourhood_positive_frac": 0.97,
+   "neighbourhood": [
+    {
+     "param": "ema_fast",
+     "value": 10,
+     "return_pct": 182.5,
+     "pf": 1.47
+    },
+    {
+     "param": "ema_fast",
+     "value": 20,
+     "return_pct": 159.07,
+     "pf": 1.48
+    },
+    {
+     "param": "ema_fast",
+     "value": 30,
+     "return_pct": 146.67,
+     "pf": 1.48
+    },
+    {
+     "param": "ema_slow",
+     "value": 100,
+     "return_pct": 148.12,
+     "pf": 1.49
+    },
+    {
+     "param": "ema_slow",
+     "value": 200,
+     "return_pct": 143.33,
+     "pf": 1.49
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 24,
+     "return_pct": 156.58,
+     "pf": 1.65
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 36,
+     "return_pct": 141.61,
+     "pf": 1.67
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 48,
+     "return_pct": 133.91,
+     "pf": 1.66
+    },
+    {
+     "param": "breakout_lookback",
+     "value": 72,
+     "return_pct": 139.43,
+     "pf": 1.84
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 1.5,
+     "return_pct": -14.16,
+     "pf": 0.71
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 2.0,
+     "return_pct": 0.64,
+     "pf": 1.0
+    },
+    {
+     "param": "atr_stop_mult",
+     "value": 2.5,
+     "return_pct": 146.47,
+     "pf": 1.4
+    },
+    {
+     "param": "take_profit_r",
+     "value": 1.5,
+     "return_pct": 130.52,
+     "pf": 1.42
+    },
+    {
+     "param": "take_profit_r",
+     "value": 2.5,
+     "return_pct": 169.66,
+     "pf": 1.56
+    },
+    {
+     "param": "take_profit_r",
+     "value": 3.0,
+     "return_pct": 194.1,
+     "pf": 1.62
+    },
+    {
+     "param": "take_profit_r",
+     "value": 4.0,
+     "return_pct": 226.64,
+     "pf": 1.73
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 2.0,
+     "return_pct": 142.92,
+     "pf": 1.47
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 2.5,
+     "return_pct": 131.94,
+     "pf": 1.45
+    },
+    {
+     "param": "trail_atr_mult",
+     "value": 3.5,
+     "return_pct": 161.6,
+     "pf": 1.51
+    },
+    {
+     "param": "adx_min",
+     "value": 15.0,
+     "return_pct": 134.76,
+     "pf": 1.5
+    },
+    {
+     "param": "adx_min",
+     "value": 18.0,
+     "return_pct": 136.15,
+     "pf": 1.55
+    },
+    {
+     "param": "adx_min",
+     "value": 22.0,
+     "return_pct": 132.84,
+     "pf": 1.69
+    },
+    {
+     "param": "adx_min",
+     "value": 25.0,
+     "return_pct": 112.15,
+     "pf": 1.82
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 0,
+     "return_pct": 192.55,
+     "pf": 1.6
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 24,
+     "return_pct": 181.99,
+     "pf": 1.49
+    },
+    {
+     "param": "max_hold_bars",
+     "value": 48,
+     "return_pct": 188.69,
+     "pf": 1.51
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 20,
+     "return_pct": 142.94,
+     "pf": 1.7
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 60,
+     "return_pct": 102.55,
+     "pf": 1.61
+    },
+    {
+     "param": "daily_trend_days",
+     "value": 120,
+     "return_pct": 113.43,
+     "pf": 1.7
+    }
+   ],
+   "buy_hold_return_pct": 55.97
+  }
+ ],
+ "daily": [
+  {
+   "instrument": "GC=F daily as CFD (5%/yr financing)",
+   "cost_bps": 3.0,
+   "financing_pct": 5.0,
+   "start": "2001-09-18",
+   "end": "2026-10-05",
+   "rows": [
+    {
+     "strategy": "Buy & hold",
+     "time_in_market_pct": 100.0,
+     "full": {
+      "cagr_pct": 5.87,
+      "total_pct": 315.1,
+      "max_dd_pct": 56.1,
+      "vol_pct": 18.1,
+      "sharpe": 0.41,
+      "calmar": 0.1,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 14.56,
+      "total_pct": 284.2,
+      "max_dd_pct": 32.0,
+      "vol_pct": 19.1,
+      "sharpe": 0.81,
+      "calmar": 0.45,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -16.14,
+      "total_pct": -53.3,
+      "max_dd_pct": 54.7,
+      "vol_pct": 18.2,
+      "sharpe": -0.88,
+      "calmar": -0.29,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 8.11,
+      "total_pct": 131.0,
+      "max_dd_pct": 29.6,
+      "vol_pct": 16.9,
+      "sharpe": 0.55,
+      "calmar": 0.27,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 12m long-only",
+     "time_in_market_pct": 75.4,
+     "full": {
+      "cagr_pct": 4.01,
+      "total_pct": 166.7,
+      "max_dd_pct": 49.5,
+      "vol_pct": 15.9,
+      "sharpe": 0.33,
+      "calmar": 0.08,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 10.09,
+      "total_pct": 159.0,
+      "max_dd_pct": 41.9,
+      "vol_pct": 17.9,
+      "sharpe": 0.63,
+      "calmar": 0.24,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -8.06,
+      "total_pct": -30.5,
+      "max_dd_pct": 32.1,
+      "vol_pct": 10.8,
+      "sharpe": -0.72,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 3.72,
+      "total_pct": 47.9,
+      "max_dd_pct": 38.4,
+      "vol_pct": 15.7,
+      "sharpe": 0.31,
+      "calmar": 0.1,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 6m long-only",
+     "time_in_market_pct": 71.0,
+     "full": {
+      "cagr_pct": 4.6,
+      "total_pct": 206.9,
+      "max_dd_pct": 34.5,
+      "vol_pct": 15.0,
+      "sharpe": 0.38,
+      "calmar": 0.13,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 9.35,
+      "total_pct": 142.4,
+      "max_dd_pct": 25.9,
+      "vol_pct": 16.5,
+      "sharpe": 0.63,
+      "calmar": 0.36,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -8.29,
+      "total_pct": -31.2,
+      "max_dd_pct": 32.9,
+      "vol_pct": 10.2,
+      "sharpe": -0.8,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 5.84,
+      "total_pct": 83.9,
+      "max_dd_pct": 29.5,
+      "vol_pct": 15.1,
+      "sharpe": 0.45,
+      "calmar": 0.2,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 3m long-only",
+     "time_in_market_pct": 64.2,
+     "full": {
+      "cagr_pct": 3.88,
+      "total_pct": 158.6,
+      "max_dd_pct": 36.1,
+      "vol_pct": 14.5,
+      "sharpe": 0.34,
+      "calmar": 0.11,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 5.85,
+      "total_pct": 75.5,
+      "max_dd_pct": 32.6,
+      "vol_pct": 15.7,
+      "sharpe": 0.44,
+      "calmar": 0.18,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -8.5,
+      "total_pct": -31.9,
+      "max_dd_pct": 34.4,
+      "vol_pct": 10.7,
+      "sharpe": -0.77,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 7.44,
+      "total_pct": 116.0,
+      "max_dd_pct": 26.0,
+      "vol_pct": 14.6,
+      "sharpe": 0.56,
+      "calmar": 0.29,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 12m long/short",
+     "time_in_market_pct": 100.0,
+     "full": {
+      "cagr_pct": -0.98,
+      "total_pct": -21.7,
+      "max_dd_pct": 84.1,
+      "vol_pct": 18.1,
+      "sharpe": 0.04,
+      "calmar": -0.01,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 4.81,
+      "total_pct": 59.3,
+      "max_dd_pct": 64.0,
+      "vol_pct": 19.1,
+      "sharpe": 0.34,
+      "calmar": 0.08,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -8.06,
+      "total_pct": -30.5,
+      "max_dd_pct": 38.8,
+      "vol_pct": 18.2,
+      "sharpe": -0.37,
+      "calmar": -0.21,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": -3.19,
+      "total_pct": -29.4,
+      "max_dd_pct": 63.6,
+      "vol_pct": 17.0,
+      "sharpe": -0.11,
+      "calmar": -0.05,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "SMA200 filter",
+     "time_in_market_pct": 72.2,
+     "full": {
+      "cagr_pct": 3.89,
+      "total_pct": 159.5,
+      "max_dd_pct": 49.3,
+      "vol_pct": 15.2,
+      "sharpe": 0.33,
+      "calmar": 0.08,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 9.91,
+      "total_pct": 154.9,
+      "max_dd_pct": 25.1,
+      "vol_pct": 17.0,
+      "sharpe": 0.64,
+      "calmar": 0.4,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -11.81,
+      "total_pct": -41.9,
+      "max_dd_pct": 43.3,
+      "vol_pct": 10.2,
+      "sharpe": -1.18,
+      "calmar": -0.27,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 5.36,
+      "total_pct": 75.0,
+      "max_dd_pct": 34.1,
+      "vol_pct": 15.1,
+      "sharpe": 0.42,
+      "calmar": 0.16,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "Donchian 55/20 long-only",
+     "time_in_market_pct": 40.7,
+     "full": {
+      "cagr_pct": 0.8,
+      "total_pct": 22.0,
+      "max_dd_pct": 41.6,
+      "vol_pct": 11.8,
+      "sharpe": 0.13,
+      "calmar": 0.02,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 2.63,
+      "total_pct": 29.4,
+      "max_dd_pct": 26.4,
+      "vol_pct": 12.4,
+      "sharpe": 0.27,
+      "calmar": 0.1,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -8.94,
+      "total_pct": -33.3,
+      "max_dd_pct": 34.9,
+      "vol_pct": 7.6,
+      "sharpe": -1.19,
+      "calmar": -0.26,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 3.27,
+      "total_pct": 41.2,
+      "max_dd_pct": 23.8,
+      "vol_pct": 12.6,
+      "sharpe": 0.32,
+      "calmar": 0.14,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "Donchian 55/20 long/short",
+     "time_in_market_pct": 60.9,
+     "full": {
+      "cagr_pct": -5.46,
+      "total_pct": -75.4,
+      "max_dd_pct": 83.0,
+      "vol_pct": 14.4,
+      "sharpe": -0.32,
+      "calmar": -0.07,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": -5.49,
+      "total_pct": -42.8,
+      "max_dd_pct": 53.4,
+      "vol_pct": 14.7,
+      "sharpe": -0.31,
+      "calmar": -0.1,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -12.26,
+      "total_pct": -43.2,
+      "max_dd_pct": 45.6,
+      "vol_pct": 14.4,
+      "sharpe": -0.83,
+      "calmar": -0.27,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": -2.55,
+      "total_pct": -24.2,
+      "max_dd_pct": 53.2,
+      "vol_pct": 14.3,
+      "sharpe": -0.11,
+      "calmar": -0.05,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 12m + vol target 15%",
+     "time_in_market_pct": 75.4,
+     "full": {
+      "cagr_pct": 5.45,
+      "total_pct": 276.1,
+      "max_dd_pct": 51.2,
+      "vol_pct": 13.8,
+      "sharpe": 0.45,
+      "calmar": 0.11,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 13.45,
+      "total_pct": 248.9,
+      "max_dd_pct": 25.8,
+      "vol_pct": 15.4,
+      "sharpe": 0.9,
+      "calmar": 0.52,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -7.0,
+      "total_pct": -27.0,
+      "max_dd_pct": 28.2,
+      "vol_pct": 8.0,
+      "sharpe": -0.86,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 3.68,
+      "total_pct": 47.4,
+      "max_dd_pct": 39.1,
+      "vol_pct": 13.9,
+      "sharpe": 0.33,
+      "calmar": 0.09,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "Buy & hold + vol target 15%",
+     "time_in_market_pct": 100.0,
+     "full": {
+      "cagr_pct": 6.27,
+      "total_pct": 355.8,
+      "max_dd_pct": 59.6,
+      "vol_pct": 15.8,
+      "sharpe": 0.46,
+      "calmar": 0.11,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 15.51,
+      "total_pct": 316.9,
+      "max_dd_pct": 19.7,
+      "vol_pct": 15.7,
+      "sharpe": 1.0,
+      "calmar": 0.79,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -15.72,
+      "total_pct": -52.3,
+      "max_dd_pct": 53.4,
+      "vol_pct": 15.7,
+      "sharpe": -1.01,
+      "calmar": -0.29,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 8.02,
+      "total_pct": 128.8,
+      "max_dd_pct": 29.1,
+      "vol_pct": 16.0,
+      "sharpe": 0.56,
+      "calmar": 0.28,
+      "years": 10.7
+     }
+    }
+   ],
+   "tsmom_random_timing": {
+    "real_sharpe": 0.33,
+    "random_median_sharpe": 0.34,
+    "real_percentile": 43.0,
+    "time_in_market": 0.75
+   }
+  },
+  {
+   "instrument": "GC=F daily unlevered (ETF/token/physical, 0.4%/yr fee)",
+   "cost_bps": 10.0,
+   "financing_pct": 0.4,
+   "start": "2001-09-18",
+   "end": "2026-10-05",
+   "rows": [
+    {
+     "strategy": "Buy & hold",
+     "time_in_market_pct": 100.0,
+     "full": {
+      "cagr_pct": 10.85,
+      "total_pct": 1207.7,
+      "max_dd_pct": 45.3,
+      "vol_pct": 18.1,
+      "sharpe": 0.66,
+      "calmar": 0.24,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 19.95,
+      "total_pct": 505.6,
+      "max_dd_pct": 29.9,
+      "vol_pct": 19.1,
+      "sharpe": 1.05,
+      "calmar": 0.67,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -12.19,
+      "total_pct": -43.0,
+      "max_dd_pct": 44.9,
+      "vol_pct": 18.2,
+      "sharpe": -0.62,
+      "calmar": -0.27,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 13.2,
+      "total_pct": 278.3,
+      "max_dd_pct": 25.1,
+      "vol_pct": 16.9,
+      "sharpe": 0.82,
+      "calmar": 0.53,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 12m long-only",
+     "time_in_market_pct": 75.4,
+     "full": {
+      "cagr_pct": 7.26,
+      "total_pct": 475.0,
+      "max_dd_pct": 40.6,
+      "vol_pct": 15.9,
+      "sharpe": 0.52,
+      "calmar": 0.18,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 14.72,
+      "total_pct": 289.4,
+      "max_dd_pct": 40.6,
+      "vol_pct": 17.9,
+      "sharpe": 0.86,
+      "calmar": 0.36,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -7.17,
+      "total_pct": -27.5,
+      "max_dd_pct": 29.3,
+      "vol_pct": 10.8,
+      "sharpe": -0.63,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 6.84,
+      "total_pct": 103.5,
+      "max_dd_pct": 34.2,
+      "vol_pct": 15.7,
+      "sharpe": 0.5,
+      "calmar": 0.2,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 6m long-only",
+     "time_in_market_pct": 71.0,
+     "full": {
+      "cagr_pct": 7.53,
+      "total_pct": 511.7,
+      "max_dd_pct": 31.8,
+      "vol_pct": 15.0,
+      "sharpe": 0.56,
+      "calmar": 0.24,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 13.15,
+      "total_pct": 239.7,
+      "max_dd_pct": 24.3,
+      "vol_pct": 16.5,
+      "sharpe": 0.83,
+      "calmar": 0.54,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -7.56,
+      "total_pct": -28.8,
+      "max_dd_pct": 30.6,
+      "vol_pct": 10.2,
+      "sharpe": -0.72,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 9.02,
+      "total_pct": 152.7,
+      "max_dd_pct": 26.4,
+      "vol_pct": 15.1,
+      "sharpe": 0.65,
+      "calmar": 0.34,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 3m long-only",
+     "time_in_market_pct": 64.2,
+     "full": {
+      "cagr_pct": 6.04,
+      "total_pct": 331.9,
+      "max_dd_pct": 33.4,
+      "vol_pct": 14.5,
+      "sharpe": 0.48,
+      "calmar": 0.18,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 8.37,
+      "total_pct": 121.7,
+      "max_dd_pct": 31.7,
+      "vol_pct": 15.7,
+      "sharpe": 0.59,
+      "calmar": 0.26,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -7.87,
+      "total_pct": -29.9,
+      "max_dd_pct": 33.4,
+      "vol_pct": 10.7,
+      "sharpe": -0.71,
+      "calmar": -0.24,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 9.97,
+      "total_pct": 177.3,
+      "max_dd_pct": 25.4,
+      "vol_pct": 14.6,
+      "sharpe": 0.72,
+      "calmar": 0.39,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 12m long/short",
+     "time_in_market_pct": 100.0,
+     "full": {
+      "cagr_pct": 2.89,
+      "total_pct": 103.8,
+      "max_dd_pct": 72.7,
+      "vol_pct": 18.1,
+      "sharpe": 0.25,
+      "calmar": 0.04,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 9.19,
+      "total_pct": 138.8,
+      "max_dd_pct": 62.9,
+      "vol_pct": 19.2,
+      "sharpe": 0.56,
+      "calmar": 0.15,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -4.45,
+      "total_pct": -17.9,
+      "max_dd_pct": 35.1,
+      "vol_pct": 18.2,
+      "sharpe": -0.16,
+      "calmar": -0.13,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 0.35,
+      "total_pct": 3.8,
+      "max_dd_pct": 53.4,
+      "vol_pct": 17.0,
+      "sharpe": 0.11,
+      "calmar": 0.01,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "SMA200 filter",
+     "time_in_market_pct": 72.2,
+     "full": {
+      "cagr_pct": 6.84,
+      "total_pct": 421.0,
+      "max_dd_pct": 42.5,
+      "vol_pct": 15.2,
+      "sharpe": 0.51,
+      "calmar": 0.16,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 14.09,
+      "total_pct": 268.8,
+      "max_dd_pct": 24.1,
+      "vol_pct": 17.0,
+      "sharpe": 0.86,
+      "calmar": 0.58,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -11.34,
+      "total_pct": -40.6,
+      "max_dd_pct": 42.0,
+      "vol_pct": 10.2,
+      "sharpe": -1.12,
+      "calmar": -0.27,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 8.39,
+      "total_pct": 137.5,
+      "max_dd_pct": 32.7,
+      "vol_pct": 15.1,
+      "sharpe": 0.61,
+      "calmar": 0.26,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "Donchian 55/20 long-only",
+     "time_in_market_pct": 40.7,
+     "full": {
+      "cagr_pct": 2.38,
+      "total_pct": 80.0,
+      "max_dd_pct": 35.9,
+      "vol_pct": 11.8,
+      "sharpe": 0.26,
+      "calmar": 0.07,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 4.45,
+      "total_pct": 53.8,
+      "max_dd_pct": 25.8,
+      "vol_pct": 12.4,
+      "sharpe": 0.41,
+      "calmar": 0.17,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -8.55,
+      "total_pct": -32.1,
+      "max_dd_pct": 33.7,
+      "vol_pct": 7.6,
+      "sharpe": -1.14,
+      "calmar": -0.25,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 5.19,
+      "total_pct": 72.0,
+      "max_dd_pct": 23.2,
+      "vol_pct": 12.6,
+      "sharpe": 0.46,
+      "calmar": 0.22,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "Donchian 55/20 long/short",
+     "time_in_market_pct": 60.9,
+     "full": {
+      "cagr_pct": -3.31,
+      "total_pct": -56.8,
+      "max_dd_pct": 73.0,
+      "vol_pct": 14.4,
+      "sharpe": -0.16,
+      "calmar": -0.05,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": -3.48,
+      "total_pct": -29.6,
+      "max_dd_pct": 44.8,
+      "vol_pct": 14.7,
+      "sharpe": -0.17,
+      "calmar": -0.08,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -10.45,
+      "total_pct": -38.0,
+      "max_dd_pct": 43.6,
+      "vol_pct": 14.4,
+      "sharpe": -0.69,
+      "calmar": -0.24,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": -0.12,
+      "total_pct": -1.3,
+      "max_dd_pct": 45.4,
+      "vol_pct": 14.3,
+      "sharpe": 0.06,
+      "calmar": -0.0,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "TSMOM 12m + vol target 15%",
+     "time_in_market_pct": 75.4,
+     "full": {
+      "cagr_pct": 8.37,
+      "total_pct": 643.1,
+      "max_dd_pct": 42.3,
+      "vol_pct": 13.8,
+      "sharpe": 0.65,
+      "calmar": 0.2,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 17.74,
+      "total_pct": 403.8,
+      "max_dd_pct": 24.6,
+      "vol_pct": 15.4,
+      "sharpe": 1.14,
+      "calmar": 0.72,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -6.36,
+      "total_pct": -24.8,
+      "max_dd_pct": 26.0,
+      "vol_pct": 8.0,
+      "sharpe": -0.78,
+      "calmar": -0.24,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 6.46,
+      "total_pct": 95.8,
+      "max_dd_pct": 35.4,
+      "vol_pct": 13.9,
+      "sharpe": 0.52,
+      "calmar": 0.18,
+      "years": 10.7
+     }
+    },
+    {
+     "strategy": "Buy & hold + vol target 15%",
+     "time_in_market_pct": 100.0,
+     "full": {
+      "cagr_pct": 10.91,
+      "total_pct": 1223.5,
+      "max_dd_pct": 45.8,
+      "vol_pct": 15.8,
+      "sharpe": 0.73,
+      "calmar": 0.24,
+      "years": 25.0
+     },
+     "2000-2011 bull": {
+      "cagr_pct": 20.24,
+      "total_pct": 520.3,
+      "max_dd_pct": 18.6,
+      "vol_pct": 15.7,
+      "sharpe": 1.25,
+      "calmar": 1.09,
+      "years": 9.9
+     },
+     "2011-2015 bear": {
+      "cagr_pct": -12.28,
+      "total_pct": -43.3,
+      "max_dd_pct": 44.7,
+      "vol_pct": 15.7,
+      "sharpe": -0.75,
+      "calmar": -0.27,
+      "years": 4.3
+     },
+     "2016-2026 bull": {
+      "cagr_pct": 13.13,
+      "total_pct": 275.7,
+      "max_dd_pct": 21.1,
+      "vol_pct": 16.0,
+      "sharpe": 0.85,
+      "calmar": 0.62,
+      "years": 10.7
+     }
+    }
+   ],
+   "tsmom_random_timing": {
+    "real_sharpe": 0.52,
+    "random_median_sharpe": 0.54,
+    "real_percentile": 37.3,
+    "time_in_market": 0.75
+   }
+  }
+ ],
+ "monte_carlo": [
+  {
+   "label": "Buy & hold gold via CFD (2000-2026 returns)",
+   "rows": [
+    {
+     "leverage": 1,
+     "median_multiple_10y": 1.78,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 11.5,
+     "p_ruin_pct": 0.0,
+     "median_cagr_pct": 5.9,
+     "years_to_10000x_at_median": 159.0
+    },
+    {
+     "leverage": 2,
+     "median_multiple_10y": 2.4,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 81.5,
+     "p_ruin_pct": 0.3,
+     "median_cagr_pct": 9.1,
+     "years_to_10000x_at_median": 105.0
+    },
+    {
+     "leverage": 3,
+     "median_multiple_10y": 2.16,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 99.4,
+     "p_ruin_pct": 7.8,
+     "median_cagr_pct": 8.0,
+     "years_to_10000x_at_median": 120.0
+    },
+    {
+     "leverage": 5,
+     "median_multiple_10y": 0.67,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 100.0,
+     "p_ruin_pct": 45.0,
+     "median_cagr_pct": -3.9,
+     "years_to_10000x_at_median": null
+    },
+    {
+     "leverage": 10,
+     "median_multiple_10y": 0.0,
+     "p_10000x_in_10y_pct": 0.03,
+     "p_lose_half_pct": 100.0,
+     "p_ruin_pct": 98.2,
+     "median_cagr_pct": -76.5,
+     "years_to_10000x_at_median": null
+    }
+   ]
+  },
+  {
+   "label": "TSMOM 12m long-only via CFD (2000-2026 returns)",
+   "rows": [
+    {
+     "leverage": 1,
+     "median_multiple_10y": 1.51,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 10.1,
+     "p_ruin_pct": 0.0,
+     "median_cagr_pct": 4.2,
+     "years_to_10000x_at_median": 224.0
+    },
+    {
+     "leverage": 2,
+     "median_multiple_10y": 1.83,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 73.4,
+     "p_ruin_pct": 0.4,
+     "median_cagr_pct": 6.3,
+     "years_to_10000x_at_median": 152.0
+    },
+    {
+     "leverage": 3,
+     "median_multiple_10y": 1.6,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 98.3,
+     "p_ruin_pct": 7.1,
+     "median_cagr_pct": 4.8,
+     "years_to_10000x_at_median": 195.0
+    },
+    {
+     "leverage": 5,
+     "median_multiple_10y": 0.57,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 100.0,
+     "p_ruin_pct": 41.3,
+     "median_cagr_pct": -5.5,
+     "years_to_10000x_at_median": null
+    },
+    {
+     "leverage": 10,
+     "median_multiple_10y": 0.0,
+     "p_10000x_in_10y_pct": 0.03,
+     "p_lose_half_pct": 100.0,
+     "p_ruin_pct": 97.2,
+     "median_cagr_pct": -69.3,
+     "years_to_10000x_at_median": null
+    }
+   ]
+  },
+  {
+   "label": "Hourly breakout (2024-2026 returns). Leverage column = risk per trade as a multiple of 1%. ONLY ~2 YEARS OF DATA: treat as optimistic",
+   "rows": [
+    {
+     "leverage": 1,
+     "median_multiple_10y": 4.36,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 0.0,
+     "p_ruin_pct": 0.0,
+     "median_cagr_pct": 15.9,
+     "years_to_10000x_at_median": 63.0
+    },
+    {
+     "leverage": 2,
+     "median_multiple_10y": 16.98,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 0.0,
+     "p_ruin_pct": 0.0,
+     "median_cagr_pct": 32.7,
+     "years_to_10000x_at_median": 33.0
+    },
+    {
+     "leverage": 3,
+     "median_multiple_10y": 63.28,
+     "p_10000x_in_10y_pct": 0.0,
+     "p_lose_half_pct": 0.2,
+     "p_ruin_pct": 0.0,
+     "median_cagr_pct": 51.4,
+     "years_to_10000x_at_median": 22.0
+    },
+    {
+     "leverage": 5,
+     "median_multiple_10y": 623.8,
+     "p_10000x_in_10y_pct": 1.65,
+     "p_lose_half_pct": 13.9,
+     "p_ruin_pct": 0.0,
+     "median_cagr_pct": 90.3,
+     "years_to_10000x_at_median": 14.0
+    }
+   ]
+  }
+ ]
+}
