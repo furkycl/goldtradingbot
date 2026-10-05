@@ -93,12 +93,20 @@ class Engine:
         for pid in list(self._open):
             if pid not in now_ids:
                 info = self._open.pop(pid)
-                pnl = self.broker.closed_pnl(pid)
+                ct = self.broker.closed_trade(pid) or {}
+                pnl, exit_px = ct.get("pnl"), ct.get("exit")
                 reason = self._close_reason.pop(pid, "broker SL/TP")
-                self.journal.event("close", id=pid, side=info.get("side"), lots=info.get("lots"),
-                                   price=info.get("entry"), pnl=None if pnl is None else round(pnl, 2),
+                self.journal.event("close", time=self._now_iso(), id=pid, side=info.get("side"),
+                                   lots=info.get("lots"), price=None if exit_px is None else round(exit_px, 2),
+                                   pnl=None if pnl is None else round(pnl, 2),
                                    reason=reason, equity=round(self.broker.equity(), 2))
                 notify(f"CLOSED {pid} ({reason}) pnl {pnl if pnl is not None else '?'}")
+
+    def _now_iso(self) -> str:
+        """Bar time in replays/backtests, wall-clock time live."""
+        if isinstance(self.broker, PaperBroker) and self.broker.feed is not None and self.last_bar is not None:
+            return pd.Timestamp(self.last_bar).isoformat()
+        return datetime.now(timezone.utc).isoformat()
 
     def _close(self, pos, reason: str) -> None:
         self._close_reason[pos.id] = reason
@@ -170,7 +178,7 @@ class Engine:
             self.rm.on_trade_opened()
             p = res.position
             self._open[p.id] = vars(p).copy()
-            self.journal.event("open", id=p.id, side=p.side, lots=p.lots, price=round(p.entry, 2), stop=stop,
+            self.journal.event("open", time=self._now_iso(), id=p.id, side=p.side, lots=p.lots, price=round(p.entry, 2), stop=stop,
                                take_profit=tp, reason=sig.reason, equity=round(eq, 2))
             notify(f"OPEN {'BUY' if sig.side > 0 else 'SELL'} {lots} @ {p.entry:.2f} SL {stop} TP {tp} "
                    f"| {sig.reason} | news {sent:+.2f} | cost {cost_r:.3f}R")

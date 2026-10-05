@@ -61,10 +61,10 @@ class PaperBroker(Broker):
         self._cache, self._cache_t = df, time.time()
         return df.tail(count)
 
-    def closed_pnl(self, position_id: str) -> float | None:
+    def closed_trade(self, position_id: str) -> dict | None:
         for c in reversed(self.closed):
             if c["id"] == position_id:
-                return float(c["pnl"])
+                return {"pnl": float(c["pnl"]), "exit": float(c["exit"])}
         return None
 
     def set_last(self, price: float) -> None:

@@ -50,6 +50,6 @@ class Broker(ABC):
     @abstractmethod
     def close(self, position_id: str) -> bool: ...
 
-    def closed_pnl(self, position_id: str) -> float | None:
-        """Realised P&L of a closed position, if the broker can tell (else None)."""
+    def closed_trade(self, position_id: str) -> dict | None:
+        """{'pnl': realised P&L, 'exit': exit price} of a closed position, if known."""
         return None

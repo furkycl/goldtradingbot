@@ -107,14 +107,15 @@ class MT5Broker(Broker):
                                  "symbol": self.symbol, "sl": new_stop, "tp": pos.take_profit})
         return r is not None and r.retcode == self.mt5.TRADE_RETCODE_DONE
 
-    def closed_pnl(self, position_id: str) -> float | None:
+    def closed_trade(self, position_id: str) -> dict | None:
         from datetime import datetime, timedelta, timezone
         deals = self.mt5.history_deals_get(datetime.now(timezone.utc) - timedelta(days=30),
                                            datetime.now(timezone.utc) + timedelta(days=1),
                                            position=int(position_id))
         if not deals:
             return None
-        return float(sum(d.profit + d.commission + d.swap for d in deals))
+        return {"pnl": float(sum(d.profit + d.commission + d.swap for d in deals)),
+                "exit": float(deals[-1].price)}
 
     def close(self, position_id: str) -> bool:
         pos = next((p for p in self.positions() if p.id == position_id), None)
