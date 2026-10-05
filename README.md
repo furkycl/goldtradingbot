@@ -1,111 +1,96 @@
 # goldtradingbot
 
-Sadece altın (XAU/USD) işlem yapan, haber takipli, **önce sermayeyi koruyan** otomatik işlem botu.
+Sadece altın (XAU/USD) işlem yapan, haber takipli ve **önce sermayeyi koruyan** otomatik işlem botu. Kendi stratejisini her hafta gerçek veride yeniden test ediyor ve sonuçları bu repoya commit ediyor.
 
-> ⚠️ **Önce bunu oku.** Kaldıraçlı ürünlerde perakende hesapların çoğu para kaybeder. Bu bot kâr garantisi vermez. 100$ → 1.000.000$ (10.000 kat) hedefine "kontrollü" biçimde ulaştıracak bir strateji yoktur. Bu kadar agresif bir hedefi zorlamak hesabı sıfırlamanın en kısa yoludur. Bot bu yüzden varsayılan olarak **sanal parayla (paper)** çalışır. Gerçek parayla işlem yapmak için iki ayrı bilinçli adım gerekir (aşağıda). Yatırım tavsiyesi değildir.
+> ⚠️ **Önce bunu oku.** Kaldıraçlı ürünlerde perakende hesapların çoğu para kaybeder. Bu bot kâr garantisi vermez. Gerçek veri testleri ([STRATEGY.md](docs/STRATEGY.md)) 100$ → 1.000.000$ hedefinin gerçekçi olmadığını gösteriyor: 5× kaldıraçta iflas olasılığı %45. Bot varsayılan olarak **sanal parayla** çalışır. Gerçek para için iki ayrı bilinçli adım gerekir. Yatırım tavsiyesi değildir.
+
+## Mevcut durum (Ekim 2026)
+
+| | |
+|---|---|
+| **Strateji** | Saatlik kırılım. Rastgele girişlere karşı anlamlı (p ≈ 0, iki ayrı veri serisinde), ama parametreler aynı dönemde seçildi. **İleriye dönük test sürüyor.** |
+| **Nerede çalışır** | Sadece düşük maliyetli **SPK lisanslı MT5 CFD**'de. VİOP'ta avantaj kayboluyor, token borsalarında zarar ediyor. Bot pahalı platformda işlem açmayı reddeder. |
+| **100$ için öneri** | Kaldıraçsız altın tut (`goldbot core`), botu demo hesapta test et. Ayrıntı: [STRATEGY.md §5](docs/STRATEGY.md). |
+| **Canlıya geçiş şartı** | İleriye dönük testte ≥100 işlem, kâr faktörü ≥1,2, düşüş ≤%15, ≥60 gün. Kontrol için: `goldbot status`. |
 
 ## Ne yapar?
 
 | Katman | İçerik |
 |---|---|
-| **Strateji** | Donchian kırılımı + EMA trend filtresi + ADX (yatay piyasada işlem yok). Sinyal mum kapanışında üretilir, emir bir sonraki mumda açılır (geleceği görme hatası yok). |
-| **Stop / kâr al** | Her emirde zorunlu ATR stop'u, R-katı kâr hedefi ve 1R kârdan sonra ATR iz süren stop. Stop **broker tarafında** emirle birlikte gönderilir, bot çökse bile pozisyon korunur. Stopsuz emir kod seviyesinde reddedilir. |
-| **Risk** | İşlem başına %1 risk, günlük %3 zarar limiti (o gün durur), zirveden %20 düşüşte kalıcı kill switch, en fazla 10:1 kaldıraç (SPK sınırı), en fazla 1 açık pozisyon, günde en fazla 4 işlem. |
-| **Haber** | Doğrulanmış 12 RSS akışı (FinancialJuice, investingLive, Investing, FXStreet, Fed, ECB, BLS, MarketWatch, Bloomberg HT), isteğe bağlı Finnhub API, Telegram kanalları (Telethon ile okuma) ve altına özel duygu skoru (Fed/faiz, dolar, jeopolitik, enflasyon, merkez bankası alımları; Türkçe başlıklar dahil). Güçlü haber eğilimine ters işlem veto edilir. Yüksek etkili ABD verilerinin (CPI, NFP, FOMC) ±30 dakikasında yeni işlem açılmaz. |
-| **Broker** | `paper` (varsayılan) · `mt5` (MetaTrader 5, çoğu SPK lisanslı kurumun sunduğu platform) · `ccxt` (PAXG gibi tokenize altın, küçük hesaplar için) |
-| **Araştırma** | Aylık GitHub Actions işi: kanıta dayalı strateji varyantlarını (günlük trend, seans, zaman stopu) gerçek veride normal ve 2× maliyetle test eder, haber akışlarını kontrol eder, raporu `reports/` altına yazar. |
-| **Kendini geliştirme** | Haftalık GitHub Actions döngüsü: güncel veriyle walk-forward optimizasyon → yeni parametreler örneklem dışında mevcutları geçerse ve güvenlik eşiklerini aşarsa → `auto/tune-*` branch'i, commit, PR → testler geçerse otomatik merge. |
-| **Bildirim** | Açılan/kapanan her işlem Telegram'dan telefonuna (isteğe bağlı). |
+| **Strateji** | Donchian kırılımı + EMA trend filtresi. Sinyal mum kapanışında, emir sonraki mumun açılışında verilir. Zaman stopu: 12 mum sonra kâra geçmemişse çıkış. Parametreler: `config/params.yaml`. |
+| **Stop / kâr al** | Her emirde zorunlu ATR stop'u ve R-katı kâr hedefi. 1R kârdan sonra iz süren stop devreye girer. Stoplar **broker tarafında** durur; stopsuz emir kodda reddedilir. |
+| **Risk** | <ul><li>İşlem başına %1 risk</li><li>Günlük %3 zarar limiti</li><li>Zirveden %20 düşüşte kalıcı durdurma</li><li>Azami 10:1 kaldıraç (SPK)</li><li>En fazla 1 pozisyon, günde en fazla 4 işlem</li><li>Maliyet koruması: işlem maliyeti riskin %5'ini aşarsa işlem açılmaz</li></ul>Tüm limitler yeniden başlatmada **korunur**. |
+| **Haber** | <ul><li>12 doğrulanmış RSS kaynağı, isteğe bağlı Finnhub ve Telegram kanalları</li><li>Altına özel duygu skoru (Türkçe dahil); güçlü ters habere karşı veto</li><li>CPI, NFP ve FOMC'nin ±30 dakikasında yeni işlem yok</li></ul> |
+| **Broker** | `paper` (varsayılan), `mt5` (demo veya canlı), `ccxt` (tokenize altın; işlem için önerilmez) |
+| **Takip** | <ul><li>İşlem defteri ve equity kaydı (`state/<mod>/`)</li><li>`status` ile canlıya geçiş kontrol listesi</li><li>HTML rapor</li><li>Telegram bildirimleri ve uzaktan kontrol: `/status /forward /pause /resume /closeall`</li></ul> |
+| **Otomatik döngüler** | Haftalık parametre testi ve ileriye dönük test raporu, aylık araştırma ve doğrulama. Hepsi branch → commit → PR → test → merge şeklinde çalışır ([aşağıda](#otomatik-döngüler)). |
 
-## 100$ ile gerçek durum
-
-Standart XAUUSD'de en küçük işlem 0,01 lot = 1 ons. Saatlik grafikte tipik stop mesafesi ons başına ~15–30$. 100$'lık hesapta bu, **tek işlemde hesabın %15–30'unu riske atmak** demek. Risk yöneticisi bunu reddeder. Backtest'te 100$ ile 273 sinyalin tamamı "lot çok büyük" diye atlanıyor. Bu bir hata değil, koruma.
-
-Seçenekler (ayrıntılar `docs/RESEARCH.md` §2):
-1. **Sanal parayla başla** (varsayılan). Stratejinin gerçek veride ne yaptığını 2-3 ay izle.
-2. **VİOP gram altın (F_XAUTRYM):** 1 kontrat = 1 gram, teminat ~900 TL. Lisanslı ve borsada işlem gören, küçük sermaye için en temiz kaldıraçlı yol. Eksikleri: sadece gündüz seansı var, kur riski taşıyor ve halka açık bir Python API yok (Matriks IQ / ideAlgo gerekiyor).
-3. **Tokenize altın, kaldıraçsız:** `config/profiles/small_account_paxg.yaml`. Ekim 2026 itibarıyla BtcTurk'te PAXG/XAUT yok. Paribu'da XAUT/TL var ama ccxt desteği yok. Platformlar SPK'nın geçici listesinde, nihai lisans yok.
-4. **50.000 TL ve üzeri:** SPK lisanslı kurum ve MT5 (ör. QNB Invest EA'ları açıkça destekliyor). `mt5` adaptörü doğrudan çalışır.
-
-⚠️ **Lisanssız yurt dışı brokerlar gri alan değildir.** Türkiye'de yerleşik kişilere izinsiz kaldıraçlı hizmet SPKn md. 109/2 kapsamında suçtur. Bu repo bu kurumları desteklemez.
-
-Ayrıntılı karşılaştırma: [`docs/RESEARCH.md`](docs/RESEARCH.md)
-
-**Strateji kararı ve gerçek veri doğrulaması:** [`docs/STRATEGY.md`](docs/STRATEGY.md). Kısaca: saatlik strateji umut verici ama kanıtlanmadı. Sadece düşük maliyetli lisanslı MT5 CFD'de çalışıyor. 100$ için en mantıklı yol kaldıraçsız altın tutmak ve botu demo hesapta test etmek.
-
-## Kurulum
+## Hızlı başlangıç
 
 ```bash
 git clone https://github.com/furkycl/goldtradingbot && cd goldtradingbot
-python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate      # Windows: scripts\windows\setup.bat
 pip install -r requirements.txt
-cp .env.example .env                                     # anahtarları doldur (asla commit etme)
-pytest -q                                                # tüm testler geçmeli
+cp .env.example .env                                     # Telegram vb. (asla commit etme)
+pytest -q
+python -m goldbot run                                    # sanal işlem
 ```
 
-## Kullanım
+Docker, Windows + MT5 demo ve Linux servis kurulumu: **[docs/DEPLOY.md](docs/DEPLOY.md)**
+
+## Komutlar
 
 ```bash
-python -m goldbot backtest --yf --equity 10000   # gerçek altın verisiyle (Yahoo GC=F, 2 yıl saatlik)
-python -m goldbot backtest --csv data/xauusd_h1.csv
-python -m goldbot optimize --yf --trials 60       # walk-forward arama, sonucu yazdırır
-python -m goldbot news                            # güncel başlıklar + duygu skoru + blackout durumu
-python -m goldbot probe-feeds                     # haber akışları çalışıyor ve güncel mi?
-python scripts/compare_variants.py                # araştırma varyantlarını gerçek veride karşılaştır
-python -m goldbot run                             # sanal (paper) işlem döngüsü
+python -m goldbot run                    # paper / demo / live (settings.yaml > mode)
+python -m goldbot status                 # ileriye dönük test ve canlıya geçiş kontrol listesi
+python -m goldbot report --mode paper    # state/paper/report.html
+python -m goldbot core                   # kaldıraçsız altın: trend ve zirveden uzaklık
+python -m goldbot news                   # güncel başlıklar ve duygu skoru
+python -m goldbot probe-feeds            # haber kaynakları canlı mı?
+python -m goldbot backtest --yf --equity 10000
+python -m goldbot reset-halt             # kalıcı durdurmayı temizle (inceledikten sonra)
+python scripts/validate.py               # tam istatistiksel doğrulama (internet gerekir)
 ```
-
-## Demo hesapta test (önerilen sonraki adım)
-
-SPK lisanslı bir kurumdan ücretsiz MT5 demo hesabı aç. `config/settings.yaml` içinde `mode: demo` ve `broker: mt5` yap, `.env` dosyasına demo hesap bilgilerini gir. Bot hesabın **gerçekten demo** olduğunu doğrulamadan işlem yapmaz. Gerçek spread ve emir iletimiyle, gerçek para olmadan ileriye dönük test yapmış olursun.
-
-**Maliyet koruması:** İşlem başı maliyet riskin %5'ini (`risk.max_cost_in_r`) aşarsa bot demo ve canlı modda işlem açmaz. Gerçek veride bu strateji pahalı platformlarda (VİOP, token borsaları) avantajını kaybediyor.
 
 ## Gerçek parayla işleme geçmek (bunu sadece sen yapabilirsin)
 
-1. En az birkaç ay paper modda sonuçları izle.
-2. `config/settings.yaml` içinde `mode: live` ve `broker: mt5` (veya `ccxt`) yap.
-3. Botun çalıştığı makinede şu ortam değişkenini **elle** tanımla:
-   `GOLDBOT_LIVE_CONFIRM="I UNDERSTAND I CAN LOSE ALL MY MONEY"`
+1. `goldbot status` komutu demo veya paper testte **"criteria met"** desin.
+2. `config/settings.yaml`: `mode: live`, `broker: mt5` (SPK lisanslı kurum).
+3. Botun çalıştığı makinede: `GOLDBOT_LIVE_CONFIRM="I UNDERSTAND I CAN LOSE ALL MY MONEY"`
 
-İkisi birden yoksa bot otomatik olarak paper moduna düşer. Kendini geliştirme döngüsü bu dosyaya ve değişkene **hiçbir zaman** dokunamaz. CI'daki `check_auto_diff.py` otomatik değişiklikleri sadece `config/params.yaml` ve `reports/` ile sınırlar.
+Bu adımların hepsi olmadan bot paper modda kalır. Otomatik döngüler bu ayarlara dokunamaz.
 
-MT5 için: Windows, `pip install MetaTrader5`, `.env` içinde `MT5_LOGIN/MT5_PASSWORD/MT5_SERVER`. Sembol adı kuruma göre değişebilir (`XAUUSD`, `GOLD`…), `broker_options.symbol` ile ayarla.
+⚠️ **Lisanssız yurt dışı brokerlar gri alan değildir.** Türkiye'de yerleşik kişilere izinsiz kaldıraçlı hizmet SPKn md. 109/2 kapsamında suçtur. Bu repo bu kurumları desteklemez.
 
-## Telegram
+## Otomatik döngüler
 
-- **Haber okumak:** https://my.telegram.org'dan `TELEGRAM_API_ID/HASH` al ve `settings.yaml > news.telegram.channels` listesine güvendiğin herkese açık kanalları ekle. İlk çalıştırmada telefon numarası ve kod sorulur. Oturum dosyası `.gitignore`'dadır.
-- **Bildirim almak:** @BotFather'dan bot oluştur, `TELEGRAM_BOT_TOKEN` ve `TELEGRAM_CHAT_ID` gir.
+| Workflow | Sıklık | Ne yapar | Neyi değiştirebilir |
+|---|---|---|---|
+| `self-improve.yml` | Her hafta | <ul><li>Walk-forward parametre araması</li><li>5 Ekim 2026 sonrası **mühürlü** veride ileriye dönük test</li><li>Her hafta rapor</li></ul> | `config/params.yaml`, ama sadece mühürlü veride ≥1000 mum varken ve aday orada da açıkça daha iyiyse |
+| `research.yml` | Her ay | Strateji varyantları ve haber kaynağı kontrolü | sadece `reports/` |
+| `validate.yml` | Her ay | <ul><li>Rastgeleye karşı test</li><li>Platform maliyetleri</li><li>2001–2026 günlük karşılaştırma</li><li>Monte Carlo</li></ul> | sadece `reports/` |
+| `ci.yml` | Her değişiklikte | Lint, testler, Docker imajı | — |
 
-Not: "Sinyal" satan Telegram kanallarının çoğu doğrulanamaz. Bot bu kanalları emir kaynağı olarak değil, sadece duygu skoruna katkı veren bir veri olarak kullanır.
-
-## Kendini geliştirme döngüsü
-
-`.github/workflows/self-improve.yml` her cumartesi 03:17 UTC'de (piyasa kapalıyken) çalışır:
-
-1. Son 2 yılın saatlik altın verisini indirir.
-2. Mevcut parametrelerin etrafında 60 aday dener (sadece ilk %60'lık eğitim verisinde).
-3. En iyi adayları **görmedikleri** 4 walk-forward dilimde test eder.
-4. Kabul şartları: medyan örneklem dışı skorda en az 0,10 iyileşme, en kötü düşüş ≤ %25, en az 8 işlem, kâr faktörü ≥ 1,1.
-5. **Mühürlü test verisi:** En yeni %15'lik veri arama ve seçimde hiç kullanılmaz. Aday bu bölümde mevcut parametrelerden kötü sonuç verirse reddedilir. Böylece aynı veride tekrar tekrar optimizasyon yapmanın getirdiği aşırı uyum sınırlanır.
-6. Kabul edilirse `auto/tune-YYYYMMDD-HHMM` branch'i açar, testleri çalıştırır, commit atar, PR açar ve squash-merge eder. Rapor `reports/` altına yazılır.
-
-Actions'ın PR açma izni kapalıysa döngü, test edilmiş branch'i doğrudan `main`'e alır. Bu ayarı açmak zorunlu değil. İstersen açabilirsin: **Settings → Actions → General → Workflow permissions** → "Read and write permissions" ve "Allow GitHub Actions to create and approve pull requests".
+Aşırı uyuma karşı önlemler:
+- Optimizer tek aday seçer, bu aday dilimlerin en az 3/4'ünde kazanmak zorundadır. Rastgele veride sahte kabul oranı %5 (`scripts/null_test.py`).
+- Mühürlü veri kontrolü bunun üstüne ayrıca uygulanır.
+- `scripts/check_auto_diff.py`, otomatik branch'lerin kod, risk veya mod ayarlarını değiştirmesini engeller.
 
 ## Yapı
 
 ```
 goldbot/
-  config.py        ayarlar, canlı mod kilidi
-  indicators.py    EMA, ATR, ADX, Donchian
-  strategy.py      sinyal + haber vetosu
-  risk.py          lot hesabı, günlük limit, kill switch
-  backtest.py      maliyetli, geleceği görmeyen backtest
-  optimize.py      walk-forward arama + güvenlik eşikleri
-  engine.py        canlı/paper döngüsü
-  news/            RSS, Telegram, takvim, duygu skoru
-  brokers/         paper, mt5, ccxt
-scripts/           self_improve.py, check_auto_diff.py
-config/            settings.yaml (senin), params.yaml (döngünün), profiles/
-.github/workflows/ ci.yml, self-improve.yml
+  strategy.py, indicators.py     sinyal, göstergeler
+  risk.py                        lot hesabı, limitler, kalıcı durum
+  backtest.py, optimize.py       maliyetli backtest, walk-forward + null-test kalibreli kabul
+  engine.py                      canlı döngü (backtest ile aynı işlemleri üretir; testli)
+  journal.py, forward.py         işlem defteri, ileriye dönük test, HTML rapor
+  daily.py, core.py              günlük stratejiler, kaldıraçsız altın sinyali
+  telegram_control.py            uzaktan kontrol
+  news/                          RSS, Telegram, takvim, duygu skoru
+  brokers/                       paper, mt5, ccxt
+scripts/                         validate, self_improve, compare_variants, null_test, check_auto_diff, windows/
+config/                          settings.yaml + validation.yaml (senin), params.yaml (döngünün)
+docs/                            STRATEGY.md (karar), RESEARCH.md (kaynaklar), DEPLOY.md (kurulum)
+reports/                         otomatik raporlar
 ```

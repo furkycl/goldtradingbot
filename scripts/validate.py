@@ -59,7 +59,7 @@ def hourly_block(df: pd.DataFrame, settings, p: StrategyParams, label: str) -> d
     long_frac = len(longs) / max(1, len(trades))
 
     rand_ret, rand_pf = [], []
-    for k in range(N_RANDOM):
+    for _ in range(N_RANDOM):
         rng = np.random.default_rng(rng_master.integers(1 << 31))
 
         def entry_fn(i, ts, rng=rng):
@@ -134,7 +134,7 @@ def venue_block(df: pd.DataFrame, settings, p: StrategyParams) -> list[dict]:
 
 
 def daily_block(df: pd.DataFrame, name: str, cost_bps: float, fin: float) -> dict:
-    c, h, l = df["close"], df["high"], df["low"]
+    c, h, lo = df["close"], df["high"], df["low"]
     strategies = {
         "Buy & hold": D.buy_hold(c),
         "TSMOM 12m long-only": D.tsmom(c, 252),
@@ -142,8 +142,8 @@ def daily_block(df: pd.DataFrame, name: str, cost_bps: float, fin: float) -> dic
         "TSMOM 3m long-only": D.tsmom(c, 63),
         "TSMOM 12m long/short": D.tsmom(c, 252, long_only=False),
         "SMA200 filter": D.sma_filter(c, 200),
-        "Donchian 55/20 long-only": D.donchian_daily(c, h, l, 55, 20),
-        "Donchian 55/20 long/short": D.donchian_daily(c, h, l, 55, 20, long_only=False),
+        "Donchian 55/20 long-only": D.donchian_daily(c, h, lo, 55, 20),
+        "Donchian 55/20 long/short": D.donchian_daily(c, h, lo, 55, 20, long_only=False),
     }
     strategies["TSMOM 12m + vol target 15%"] = D.vol_target(c, strategies["TSMOM 12m long-only"], 15, 2.0)
     strategies["Buy & hold + vol target 15%"] = D.vol_target(c, strategies["Buy & hold"], 15, 2.0)

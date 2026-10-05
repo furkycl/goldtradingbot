@@ -46,8 +46,9 @@ class MT5Broker(Broker):
         settings.min_lot = info.volume_min
         settings.lot_step = info.volume_step
         # initial risk per ticket survives restarts (MT5 only stores the CURRENT stop)
-        from ..config import ROOT
         import json
+
+        from ..config import ROOT
         self._risk_path = ROOT / "state" / "mt5_risk.json"
         self._risk = json.loads(self._risk_path.read_text()) if self._risk_path.exists() else {}
 

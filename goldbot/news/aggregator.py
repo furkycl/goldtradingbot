@@ -96,6 +96,7 @@ class NewsAggregator:
     def poll_finnhub(self) -> int:
         """Optional: Finnhub general news (free key, ~60 calls/min, non-commercial)."""
         import os
+
         import requests
 
         key = os.environ.get("FINNHUB_KEY")

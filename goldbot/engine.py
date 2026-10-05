@@ -179,8 +179,9 @@ class Engine:
             self.rm.on_trade_opened()
             p = res.position
             self._open[p.id] = vars(p).copy()
-            self.journal.event("open", time=self._now_iso(), id=p.id, side=p.side, lots=p.lots, price=round(p.entry, 2), stop=stop,
-                               take_profit=tp, reason=sig.reason, equity=round(eq, 2))
+            self.journal.event("open", time=self._now_iso(), id=p.id, side=p.side, lots=p.lots,
+                               price=round(p.entry, 2), stop=stop, take_profit=tp, reason=sig.reason,
+                               equity=round(eq, 2))
             notify(f"OPEN {'BUY' if sig.side > 0 else 'SELL'} {lots} @ {p.entry:.2f} SL {stop} TP {tp} "
                    f"| {sig.reason} | news {sent:+.2f} | cost {cost_r:.3f}R")
             return "opened"

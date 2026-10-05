@@ -2,13 +2,19 @@
 pure random walks (where no strategy can have an edge)? Target <= 5%.
 2026-10-05 result: old procedure 45% (independent audit), new procedure 5% (3/60),
 before the sealed-holdout gate which filters further."""
-import sys, json
+import json
+import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import numpy as np, pandas as pd
 from multiprocessing import Pool
+
+import numpy as np
+import pandas as pd
+
 from goldbot.config import Settings, StrategyParams
 from goldbot.optimize import search
+
 
 def rw(seed, n=8000):
     rng = np.random.default_rng(seed)

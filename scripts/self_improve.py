@@ -13,20 +13,19 @@ from __future__ import annotations
 
 import json
 import sys
-
-import pandas as pd
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pandas as pd
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from goldbot import data  # noqa: E402
-from goldbot.config import ROOT, load_params, load_settings, save_params  # noqa: E402
-from goldbot.backtest import run_backtest  # noqa: E402
-from goldbot.optimize import score, search  # noqa: E402
-from goldbot.strategy import warmup_bars  # noqa: E402
-
 import yaml  # noqa: E402
+
+from goldbot import data  # noqa: E402
+from goldbot.backtest import run_backtest  # noqa: E402
+from goldbot.config import ROOT, load_params, load_settings, save_params  # noqa: E402
+from goldbot.optimize import score, search  # noqa: E402
 
 VALID = yaml.safe_load((ROOT / "config" / "validation.yaml").read_text())
 HOLDOUT_START = pd.Timestamp(VALID["holdout_start"], tz="UTC")
