@@ -138,7 +138,6 @@ Değerlendirilip **eklenmeyenler:** COT, gün-of-week, Fear & Greed, Londra fix 
 | Fed para politikası | `federalreserve.gov/feeds/press_monetary.xml` | FOMC metinleri |
 | Fed tüm duyurular | `federalreserve.gov/feeds/press_all.xml` | |
 | ECB | `ecb.europa.eu/rss/press.html` | |
-| BLS CPI / istihdam | `bls.gov/feed/cpi.rss`, `bls.gov/feed/empsit.rss` | Resmi kaynak, 08:30 ET'de güncelleniyor |
 | MarketWatch | `feeds.content.dowjones.io/public/rss/mw_topstories` | |
 | Bloomberg HT | `bloomberght.com/rss` | Türkçe |
 
@@ -147,6 +146,7 @@ Değerlendirilip **eklenmeyenler:** COT, gün-of-week, Fear & Greed, Londra fix 
 - CNBC (403) ve FT bot erişimini engelliyor.
 - Reuters 2020'de RSS'i kapattı.
 - Yahoo, Nasdaq ve Investing TR akışları güncellenmiyor.
+- BLS akışları (CPI, istihdam) sunuculardan gelen istekleri 403 ile reddediyor (5 Ekim 2026). Bu veriler zaten FinancialJuice ve investingLive'da daha hızlı çıkıyor; açıklanma saatlerini de takvim blackout'u kapsıyor.
 
 ### 4.2 Takvim ve API'ler
 

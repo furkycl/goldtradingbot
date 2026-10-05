@@ -25,8 +25,6 @@ DEFAULT_RSS = [
     "https://www.federalreserve.gov/feeds/press_monetary.xml",  # FOMC statements
     "https://www.federalreserve.gov/feeds/press_all.xml",
     "https://www.ecb.europa.eu/rss/press.html",
-    "https://www.bls.gov/feed/cpi.rss",
-    "https://www.bls.gov/feed/empsit.rss",                      # jobs report (NFP)
     "https://feeds.content.dowjones.io/public/rss/mw_topstories",
     "https://www.bloomberght.com/rss",
 ]
