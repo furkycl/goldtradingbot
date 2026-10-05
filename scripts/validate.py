@@ -103,6 +103,36 @@ def hourly_block(df: pd.DataFrame, settings, p: StrategyParams, label: str) -> d
     }
 
 
+VENUES = {
+    # name: (spread $/oz, round-trip commission as % of notional, financing %/yr, long_only)
+    "Global raw CFD (benchmark, not legal in TR)": (0.15, 0.0015, 5.0, False),
+    "SPK-licensed TR CFD via MT5": (0.50, 0.0, 5.0, False),
+    "VIOP F_XAUUSD (0.05%/side + fees)": (0.20, 0.12, 0.0, False),
+    "Token spot, 0.10%/side (PAXG/XAUT)": (1.50, 0.20, 0.0, True),
+    "Token spot, 0.20%/side": (2.00, 0.40, 0.0, True),
+}
+
+
+def venue_block(df: pd.DataFrame, settings, p: StrategyParams) -> list[dict]:
+    start = df.index[warmup_bars(p) + 50]
+    mid = float(df["close"].loc[start:].mean())
+    rows = []
+    for name, (spread, rt_pct, fin, long_only) in VENUES.items():
+        s = replace(settings)
+        s.spread, s.financing_pct_per_year, s.long_only = spread, fin, long_only
+        s.commission_per_lot = rt_pct / 100 * mid * s.contract_size
+        if long_only:   # spot token: no leverage
+            s.risk = replace(s.risk, max_leverage=1.0)
+        r = run_backtest(df, s, p, trade_from=start)
+        st = r.stats
+        risk = [t.initial_risk for t in r.trades]
+        cost_oz = spread + rt_pct / 100 * mid
+        rows.append({"venue": name, "return_pct": st["return_pct"], "max_dd_pct": st["max_drawdown_pct"],
+                     "trades": st["trades"], "pf": st["profit_factor"],
+                     "cost_per_trade_in_R": round(cost_oz / float(np.mean(risk)), 3) if risk else None})
+    return rows
+
+
 def daily_block(df: pd.DataFrame, name: str, cost_bps: float, fin: float) -> dict:
     c, h, l = df["close"], df["high"], df["low"]
     strategies = {
@@ -200,6 +230,11 @@ def md_report(res: dict) -> str:
     L += ["", "Long vs short P&L ($10k account):", ""]
     for h in res["hourly"]:
         L.append(f"- {h['label']}: longs {h['n_long']} trades ${h['long_pnl']}, shorts {h['n_short']} trades ${h['short_pnl']}")
+    if res.get("venues"):
+        L += ["", "### Same strategy with the costs of venues reachable from Turkey (GC=F 1h, current params)", "",
+              "| Venue | Return % | Max DD % | Trades | PF | Cost per trade (in R) |", "|---|---|---|---|---|---|"]
+        for v in res["venues"]:
+            L.append(f"| {v['venue']} | {v['return_pct']} | {v['max_dd_pct']} | {v['trades']} | {v['pf']} | {v['cost_per_trade_in_R']} |")
     for d in res["daily"]:
         L += ["", f"## 2. Daily strategies — {d['instrument']} ({d['start']} → {d['end']}, cost {d['cost_bps']} bps/switch, financing {d['financing_pct']}%/yr)", "",
               "| Strategy | In market % | CAGR % | Max DD % | Sharpe | Calmar | 2000-11 CAGR | 2011-15 bear CAGR / DD | 2016-26 CAGR |",
@@ -233,6 +268,7 @@ def main() -> int:
     gc_h = data.load_yfinance("GC=F", "730d", "1h")
     res["hourly"].append(hourly_block(gc_h, settings, current, "GC=F 1h, current params"))
     res["hourly"].append(hourly_block(gc_h, settings, ORIGINAL_DEFAULTS, "GC=F 1h, original defaults"))
+    res["venues"] = venue_block(gc_h, settings, current)
     try:
         px_h = data.load_yfinance("PAXG-USD", "730d", "1h")
         px_set = replace(settings); px_set.financing_pct_per_year = 0.0
