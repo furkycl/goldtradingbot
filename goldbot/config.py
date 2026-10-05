@@ -22,6 +22,28 @@ PARAMS_PATH = ROOT / "config" / "params.yaml"
 LIVE_CONFIRM_PHRASE = "I UNDERSTAND I CAN LOSE ALL MY MONEY"
 
 
+def load_dotenv(path: Path | None = None) -> int:
+    """Minimal .env loader (KEY=VALUE, # comments, optional quotes).
+    Never overrides variables that are already set in the environment."""
+    path = path or ROOT / ".env"
+    if not path.exists():
+        return 0
+    n = 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, val = line.split("=", 1)
+        key = key.strip().removeprefix("export ").strip()
+        val = val.strip()
+        if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+            val = val[1:-1]
+        if key and val and key not in os.environ:
+            os.environ[key] = val
+            n += 1
+    return n
+
+
 @dataclass
 class RiskSettings:
     risk_per_trade_pct: float = 1.0      # % of equity lost if stop is hit
