@@ -36,3 +36,7 @@ jobs:
         run: |
           docker run --rm goldbot:ci --help
           docker run --rm goldbot:ci backtest --equity 10000
+          # root-owned bind mount (what `docker compose up` creates) must still be writable
+          mkdir -p /tmp/st && sudo chown root:root /tmp/st
+          docker run --rm -v /tmp/st:/app/state goldbot:ci reset-halt
+          test -f /tmp/st/paper/risk.json && echo "state volume writable"

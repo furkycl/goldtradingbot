@@ -4,6 +4,7 @@ pyyaml>=6.0
 requests>=2.31
 feedparser>=6.0
 yfinance>=0.2.40
+pytest>=8.0
 # optional, install the one you use:
 # telethon>=1.36        # Telegram channel listener
 # MetaTrader5>=5.0.45   # MT5 broker (Windows only)

@@ -122,3 +122,21 @@ def test_ccxt_never_keeps_unprotected_position(tmp_path, monkeypatch):
     assert r.ok and br.positions()[0].lots == 0.5     # only the bot's quantity
     assert json.loads(br._path.read_text())["spot"]["stop_id"] == "s1"
     assert br.close("spot") and sold[-1] == 0.5 and br.ex.bal["PAXG"] == 5.0
+
+
+def test_holdout_restarts_after_acceptance(tmp_path, monkeypatch):
+    import importlib.util
+    import sys
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "validation.yaml").write_text((root / "config" / "validation.yaml").read_text())
+    (tmp_path / "reports" / "self-improve-2026-12-20.json").write_text('{"date": "2026-12-20", "accepted": true}')
+    (tmp_path / "reports" / "self-improve-2027-01-03.json").write_text('{"date": "2027-01-03", "accepted": false}')
+    monkeypatch.setattr("goldbot.config.ROOT", tmp_path)
+    spec = importlib.util.spec_from_file_location("si", root / "scripts" / "self_improve.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["si"] = mod
+    spec.loader.exec_module(mod)
+    assert str(mod.HOLDOUT_START.date()) == "2026-12-21"

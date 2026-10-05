@@ -31,9 +31,10 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
-- `./state` klasörü kalıcıdır: risk durumu, işlem defteri ve loglar burada durur. Güncelleme sonrası da korunur.
+- `./state` klasörü kalıcıdır: risk durumu, işlem defteri ve loglar burada durur. Güncelleme sonrası da korunur. Klasör izinlerini konteyner kendisi düzeltir.
 - Güncellemek için: `git pull && docker compose up -d --build`
-- Sağlık kontrolü: Log 2 saatten uzun süre yazılmazsa konteyner "unhealthy" görünür.
+- Sağlık kontrolü: Piyasa açıkken log 2 saatten uzun süre yazılmazsa konteyner "unhealthy" görünür. Hafta sonu bu kontrol yapılmaz.
+- Komut çalıştırmak için: `docker compose run --rm goldbot status`
 
 ## B) Windows + MetaTrader 5
 
@@ -77,8 +78,20 @@ python -m goldbot status                 # ileriye dönük test ve canlıya geç
 python -m goldbot report --mode demo     # state/demo/report.html
 python -m goldbot core                   # kaldıraçsız altın için trend durumu
 python -m goldbot probe-feeds            # haber kaynakları çalışıyor mu
-python -m goldbot reset-halt             # kalıcı zarar limiti tetiklendiyse, inceledikten SONRA
+python -m goldbot reset-halt             # kalıcı zarar limiti tetiklendiyse: önce botu DURDUR, incele, sonra çalıştır
 ```
+
+## Telegram kanallarından haber okumak (isteğe bağlı)
+
+1. https://my.telegram.org adresinden `TELEGRAM_API_ID` ve `TELEGRAM_API_HASH` al ve `.env` dosyasına yaz.
+2. `pip install telethon`
+3. **Bir kez** etkileşimli giriş yap: `python -m goldbot telegram-login`. Telefon numaran ve gelen kod sorulur. Oturum `state/telegram/` içinde saklanır.
+   - Docker'da: `docker compose run --rm goldbot telegram-login`
+4. Kanallar `config/settings.yaml > news.telegram.channels` altında. Bot bu kanalları sadece okur.
+
+## Aynı anda tek kopya
+
+Bot her mod için bir kilit dosyası (`state/<mod>/goldbot.lock`) kullanır. Aynı modda ikinci bir kopya başlamayı reddeder. Bu yüzden `run.bat` ile Windows görevi gibi iki başlatma yolu yanlışlıkla aynı anda çalışırsa sorun çıkmaz.
 
 ## Canlıya geçiş (sadece sen)
 

@@ -1,5 +1,18 @@
 # Değişiklik günlüğü
 
+## 0.2.1 — 5 Ekim 2026
+İkinci bağımsız inceleme bulguları:
+- Gizli anahtarlar loglarda maskeleniyor.
+- `/pause` ve izlenen pozisyonlar yeniden başlatmada korunuyor; bot kapalıyken kapanan işlemler deftere yazılıyor.
+- Telegram: birikmiş komutlar çalıştırılmıyor; sahip kontrolü gönderen kimliğiyle yapılıyor.
+- Tek kopya kilidi; `reset-halt` bot çalışırken reddediliyor.
+- ccxt: borsa tarafı stop zorunlu; sadece botun aldığı miktar yönetiliyor.
+- MT5: sunucu saati UTC'ye çevriliyor; demo hesap her emirde kontrol ediliyor.
+- Canlı motor ile backtest kuruşu kuruşuna aynı (testli).
+- Mühürlü test verisi her kabulden sonra yeniden başlıyor; doğrulama raporu mühürlü veriye bakmıyor.
+- Otomatik main'e yazma yolunda test ve tekrar deneme eklendi.
+- Docker: volume izinleri ve hafta sonuna duyarlı sağlık kontrolü.
+
 ## 0.2.0 — 5 Ekim 2026
 
 **Doğrulama ve güvenilirlik**

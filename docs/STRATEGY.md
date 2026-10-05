@@ -101,7 +101,7 @@ GC=F günlük veri, 2001–2026, kaldıraçsız (ETF/token/fiziki, yıllık %0,4
 
 | İş | Sıklık | Ne değiştirebilir |
 |---|---|---|
-| `self-improve.yml` | Her hafta | `params.yaml`, ancak sadece mühürlü yeni veride de daha iyiyse. Değişiklik olmasa da her hafta ileriye dönük test raporu yazıyor. |
+| `self-improve.yml` | Her hafta | `params.yaml`, ancak sadece mühürlü yeni veride de daha iyiyse. Her kabulden sonra mühürlü veri yeniden başlıyor, yani aynı veri iki kez karar için kullanılmıyor. Değişiklik olmasa da her hafta ileriye dönük test raporu yazıyor. |
 | `research.yml` | Her ay | Sadece raporlar: strateji varyantları (mühürlü veriye dokunmadan) ve haber kaynaklarının durumu |
 | `validate.yml` | Her ay | Sadece raporlar: rastgeleye karşı test, platform maliyetleri, 25 yıllık günlük karşılaştırma, Monte Carlo |
-| `ci.yml` | Her değişiklikte | 30 test. Otomatik branch'lerin sadece parametre ve rapor değiştirdiğini kontrol ediyor. |
+| `ci.yml` | Her değişiklikte | Lint, tüm testler (canlı motor ile backtest arasında kuruşu kuruşuna eşitlik dahil) ve Docker imajı. Otomatik branch'lerin sadece parametre ve rapor değiştirdiğini kontrol ediyor. |
