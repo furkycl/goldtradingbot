@@ -4,7 +4,8 @@
   optimize   [--csv FILE | --yf] [--trials N]   walk-forward search (prints result)
   news                                          print current headlines + sentiment
   probe-feeds                                   check RSS feeds are alive and fresh
-  run                                           start paper (or live, if confirmed) trading
+  run                                           start paper / demo / live trading
+  reset-halt                                    clear the kill switch after a human review
 """
 from __future__ import annotations
 
@@ -36,6 +37,7 @@ def main(argv=None) -> None:
     sub.add_parser("news")
     sub.add_parser("probe-feeds", help="check every RSS feed is reachable and fresh")
     sub.add_parser("run")
+    sub.add_parser("reset-halt", help="clear a drawdown/daily halt after reviewing what happened")
     args = ap.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -67,8 +69,25 @@ def main(argv=None) -> None:
         for url, status, age in NewsAggregator(rss=settings.news.get("rss")).probe():
             print(f"{status:<22} newest {age:>8}  {url}")
     elif args.cmd == "run":
-        from .engine import Engine
+        from logging.handlers import RotatingFileHandler
+        from .config import ROOT
+        from .engine import Engine, mode_name
+        logdir = ROOT / "state" / mode_name(settings)
+        logdir.mkdir(parents=True, exist_ok=True)
+        fh = RotatingFileHandler(logdir / "goldbot.log", maxBytes=5_000_000, backupCount=5, encoding="utf-8")
+        fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        logging.getLogger().addHandler(fh)
         Engine(settings, params).run()
+    elif args.cmd == "reset-halt":
+        from .config import ROOT
+        from .engine import mode_name
+        from .brokers import make_broker
+        from .risk import RiskManager
+        broker = make_broker(settings)
+        rm = RiskManager(settings.risk, settings.contract_size, settings.min_lot, settings.lot_step, broker.equity())
+        rm.attach(ROOT / "state" / mode_name(settings) / "risk.json")
+        old = rm.reset_halt(broker.equity())
+        print(f"halt cleared (was: {old or 'none'}); drawdown now measured from {broker.equity():.2f}")
 
 
 if __name__ == "__main__":

@@ -5,9 +5,11 @@ A trade without a stop loss is impossible by construction.
 """
 from __future__ import annotations
 
+import json
 import math
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import date
+from pathlib import Path
 
 from .config import RiskSettings
 
@@ -30,6 +32,38 @@ class RiskManager:
         self.min_lot = min_lot
         self.lot_step = lot_step
         self.state = RiskState(peak_equity=starting_equity, day_start_equity=starting_equity)
+        self.path: Path | None = None
+
+    # ------------------------------------------------------------ persistence
+    def attach(self, path: Path) -> None:
+        """Persist state to `path` so restarts cannot bypass the daily loss limit
+        or the drawdown kill switch. Loads existing state if present."""
+        self.path = path
+        if path.exists():
+            d = json.loads(path.read_text())
+            d["day"] = date.fromisoformat(d["day"]) if d.get("day") else None
+            self.state = RiskState(**d)
+
+    def save(self) -> None:
+        if self.path is None:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        d = asdict(self.state)
+        d["day"] = self.state.day.isoformat() if self.state.day else None
+        d["history"] = d["history"][-50:]
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(d, indent=1))
+        tmp.replace(self.path)
+
+    def reset_halt(self, equity: float) -> str:
+        """Human action: clear a halt and restart drawdown measurement from `equity`."""
+        old = self.state.halted_reason
+        self.state.halted_reason = ""
+        self.state.peak_equity = equity
+        self.state.day_start_equity = equity
+        self.state.history.append(f"halt reset by operator (was: {old or 'none'})")
+        self.save()
+        return old
 
     # ------------------------------------------------------------------ state
     def on_new_bar(self, today: date, equity: float) -> None:
@@ -41,9 +75,11 @@ class RiskManager:
                 self.state.halted_reason = ""
         self.state.peak_equity = max(self.state.peak_equity, equity)
         self._check_limits(equity)
+        self.save()
 
     def on_trade_opened(self) -> None:
         self.state.trades_today += 1
+        self.save()
 
     def _check_limits(self, equity: float) -> None:
         if self.state.halted_reason.startswith("drawdown"):
