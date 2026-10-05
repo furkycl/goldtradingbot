@@ -1,12 +1,12 @@
-ok                     newest     0.1h  https://www.financialjuice.com/feed.ashx?xy=rss
-ok                     newest     2.8h  https://investinglive.com/feed/news
-ok                     newest     2.6h  https://www.investing.com/rss/news_95.rss
-ok                     newest     0.3h  https://www.fxstreet.com/rss/news
-ok                     newest     0.3h  https://www.investing.com/rss/news_11.rss
-ok                     newest   454.9h  https://www.federalreserve.gov/feeds/press_monetary.xml
-ok                     newest    68.1h  https://www.federalreserve.gov/feeds/press_all.xml
-ok                     newest     8.9h  https://www.ecb.europa.eu/rss/press.html
+ok                     newest     0.2h  https://www.financialjuice.com/feed.ashx?xy=rss
+ok                     newest     3.2h  https://investinglive.com/feed/news
+ok                     newest     3.0h  https://www.investing.com/rss/news_95.rss
+ok                     newest     0.6h  https://www.fxstreet.com/rss/news
+ok                     newest     0.1h  https://www.investing.com/rss/news_11.rss
+ok                     newest   455.2h  https://www.federalreserve.gov/feeds/press_monetary.xml
+ok                     newest    68.5h  https://www.federalreserve.gov/feeds/press_all.xml
+ok                     newest     9.2h  https://www.ecb.europa.eu/rss/press.html
 EMPTY (http 403)       newest        -  https://www.bls.gov/feed/cpi.rss
 EMPTY (http 403)       newest        -  https://www.bls.gov/feed/empsit.rss
-ok                     newest     0.4h  https://feeds.content.dowjones.io/public/rss/mw_topstories
+ok                     newest     0.2h  https://feeds.content.dowjones.io/public/rss/mw_topstories
 ok                     newest     0.5h  https://www.bloomberght.com/rss
