@@ -1,3 +1,3 @@
 """goldbot — risk-first, news-aware XAU/USD trading bot (paper trading by default)."""
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"

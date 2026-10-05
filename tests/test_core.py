@@ -327,3 +327,18 @@ def test_cost_guard_off_in_paper_mode(df, tmp_path):
         broker.feed = df.iloc[: i + 1]
         eng.step()
     assert broker.closed or broker.positions()
+
+
+def test_profiles_load_and_stay_safe():
+    from goldbot.config import ROOT
+    for name in ("micro_100usd", "aggressive", "small_account_paxg"):
+        s = load_settings(ROOT / "config" / "profiles" / f"{name}.yaml")
+        assert s.mode == "paper" and not s.live_enabled
+        assert s.risk.risk_per_trade_pct <= 2.0 and s.risk.max_leverage <= 10
+        assert s.risk.max_cost_in_r <= 0.05
+
+
+def test_micro_account_sizing():
+    rm = RiskManager(RiskSettings(risk_per_trade_pct=1.0), 100, 0.001, 0.001, 100)
+    assert rm.size_position(100, 4000, 3990) == pytest.approx(0.001)   # $10 stop -> 0.1 oz
+    assert rm.size_position(100, 4000, 3970) == 0.0                     # $30 stop -> too big

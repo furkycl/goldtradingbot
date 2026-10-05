@@ -97,11 +97,34 @@ GC=F günlük veri, 2001–2026, kaldıraçsız (ETF/token/fiziki, yıllık %0,4
 - Token platformunda saatlik işlem.
 - Lisanssız yurt dışı broker. SPKn 109/2 kapsamında hizmet vermek suç ve yatırımcı koruma altında değil.
 
-## 6. Döngü şimdi ne yapıyor?
+## 6. Strateji kütüphanesi ve ensemble (5 Ekim 2026 akşamı)
+
+Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailesi eklendi. Hepsi **aynı** çıkış kurallarını (ATR stop, R-katı hedef, iz süren stop, zaman stopu), aynı lot hesabını ve aynı risk limitlerini kullanır; bu sayede aileler sadece **giriş kalitesiyle** yarışır.
+
+| Aile | Mantık | Dayanak |
+|---|---|---|
+| `breakout` | Donchian kırılımı + EMA trend | Bartsch et al.; mevcut strateji |
+| `squeeze` | Bollinger genişliği son 100 barın en düşük %25'indeyken bant kırılımı (sakin dönem sonrası patlama) | Volatilite kümelenmesi; kırılımdan farklı tetik |
+| `overnight` | Asya seansında (22:00 UTC) trend yukarıysa alış, 9 bar sonra zorunlu çıkış | Blose & Gondhalekar 2014: gece getirileri pozitif |
+| `spike` | ATR'nin 3 katı aralıklı "şok" mumundan sonra ters yönde işlem (takvimsiz haber tepkisi) | Smales 2015: aşırı tepki ve geri dönüş |
+| `meanrev` | ADX < 18 iken 2σ Bollinger dışına kapanışta ortalamaya dönüş | Trendsiz rejim için ters mantık |
+
+**Seçici (ensemble):** Her ailenin gerçekleşen R-katlarının üstel ağırlıklı ortalaması tutulur. Aynı barda birden fazla sinyal varsa en iyi skora sahip aile kazanır; eşiğin altına düşen aile "yedeğe" alınır ama kâğıt üstünde puanlanmaya devam eder, toparlarsa geri gelir. En iyi iki aile ters yönde ve skorları yakınsa işlem açılmaz. Skorlar yeniden başlatmada korunur.
+
+**Kural:** Hiçbir aile ve hiçbir ensemble, `scripts/compare_strategies.py` (aylık `research.yml`) rastgele girişe karşı p ≤ 0,05, 2× maliyette PF > 1,1 ve 4 walk-forward diliminin en az 3'ünde kâr göstermeden `params.yaml`'a girmez. İlk gerçek veri sonucu: `reports/strategies-*.md`.
+
+## 7. 100$ ile dürüst matematik
+
+- Standart XAUUSD'de min 0,01 lot = 1 ons; 3 ATR stop ≈ 45–90$ = hesabın yarısı. Bot bunu **reddeder**; bu bir koruma.
+- Tek çalışır yol: 0,001 lot sunan mikro/cent hesap (`config/profiles/micro_100usd.yaml`). O zaman %1 risk = 1$, stop 10$/oz; maliyet 0,04R ile koruma sınırının hemen altında.
+- `config/profiles/aggressive.yaml`: işlem başı %2 risk, %5 günlük, %30 kalıcı limit. Monte Carlo'ya göre %2 risk getiriyi yaklaşık ikiye katlar, düşüşü de ikiye katlar; %5 ve üstü ise iflas bölgesine girer, o yüzden profil %2'yi geçmez.
+- 100$ için sıralama değişmedi: **kaldıraçsız altın tut → demo'da kanıtla → sermaye ≥ 2.000$ olunca canlı.**
+
+## 8. Döngü şimdi ne yapıyor?
 
 | İş | Sıklık | Ne değiştirebilir |
 |---|---|---|
 | `self-improve.yml` | Her hafta | `params.yaml`, ancak sadece mühürlü yeni veride de daha iyiyse. Her kabulden sonra mühürlü veri yeniden başlıyor, yani aynı veri iki kez karar için kullanılmıyor. Değişiklik olmasa da her hafta ileriye dönük test raporu yazıyor. |
-| `research.yml` | Her ay | Sadece raporlar: strateji varyantları (mühürlü veriye dokunmadan) ve haber kaynaklarının durumu |
+| `research.yml` | Her ay | Sadece raporlar: strateji varyantları, **strateji aileleri ve ensemble karşılaştırması** (mühürlü veriye dokunmadan), haber kaynaklarının durumu |
 | `validate.yml` | Her ay | Sadece raporlar: rastgeleye karşı test, platform maliyetleri, 25 yıllık günlük karşılaştırma, Monte Carlo |
 | `ci.yml` | Her değişiklikte | Lint, tüm testler (canlı motor ile backtest arasında kuruşu kuruşuna eşitlik dahil) ve Docker imajı. Otomatik branch'lerin sadece parametre ve rapor değiştirdiğini kontrol ediyor. |

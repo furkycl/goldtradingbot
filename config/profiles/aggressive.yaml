@@ -1,0 +1,39 @@
+# ====================== "RİSK ALMAYI UNUTMA" PROFİLİ ======================
+# Bilinçli olarak daha agresif, ama hâlâ matematiksel olarak savunulabilir
+# sınırlar. İşlem başı %2 risk (≈ %1'in iki katı getiri VE iki katı düşüş).
+# Monte Carlo (reports/validation-2026-10-05.md, 2 yıllık iyimser veri):
+#   %1 risk: medyan yıllık ~%18, %50+ düşüş olasılığı %0
+#   %2 risk: medyan yıllık ~%38, %50+ düşüş olasılığı %0 (10 yıl, 4.000 senaryo)
+#   %5 risk: medyan yıllık ~%110, %50+ düşüş olasılığı %7, art arda 10 kayıp
+#            = hesabın %40'ı gider. BU PROFİL %5'E İZİN VERMEZ.
+# Art arda 10 kayıp %2 riskle hesabın ~%18'ini götürür; günlük %5 limit ve
+# %30 kalıcı durdurma bunun ötesini keser. Sadece demo'da kanıtlanmış
+# stratejiyle ve kaybetmeyi göze aldığın parayla kullan.
+# ===========================================================================
+mode: paper
+broker: mt5
+symbol: XAUUSD
+starting_equity: 2000
+
+commission_per_lot: 7.0
+spread: 0.30
+financing_pct_per_year: 5.0
+contract_size: 100
+min_lot: 0.01
+lot_step: 0.01
+
+poll_seconds: 30
+news_blackout_minutes: 30
+
+risk:
+  risk_per_trade_pct: 2.0
+  max_daily_loss_pct: 5.0
+  max_drawdown_pct: 30.0
+  max_leverage: 10.0
+  max_open_positions: 1
+  max_trades_per_day: 4
+  max_cost_in_r: 0.05
+
+broker_options:
+  symbol: XAUUSD
+  magic: 770077
