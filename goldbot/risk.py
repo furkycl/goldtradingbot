@@ -105,13 +105,13 @@ class RiskManager:
         return True, ""
 
     # ----------------------------------------------------------------- sizing
-    def size_position(self, equity: float, entry: float, stop: float) -> float:
-        """Lots such that hitting the stop loses <= risk_per_trade_pct of equity,
-        and notional <= max_leverage * equity. Returns 0 if below the min lot."""
+    def size_position(self, equity: float, entry: float, stop: float, scale: float = 1.0) -> float:
+        """Lots such that hitting the stop loses <= risk_per_trade_pct * scale of
+        equity, and notional <= max_leverage * equity. Returns 0 if below the min lot."""
         stop_dist = abs(entry - stop)
         if stop_dist <= 0 or equity <= 0 or entry <= 0:
             return 0.0
-        risk_usd = equity * self.cfg.risk_per_trade_pct / 100
+        risk_usd = equity * self.cfg.risk_per_trade_pct / 100 * max(0.0, min(scale, 1.5))
         lots_by_risk = risk_usd / (stop_dist * self.contract_size)
         lots_by_leverage = equity * self.cfg.max_leverage / (entry * self.contract_size)
         lots = min(lots_by_risk, lots_by_leverage)

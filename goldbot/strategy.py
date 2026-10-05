@@ -1,43 +1,34 @@
-"""Trend-following breakout strategy with news-sentiment filter.
+"""Strategy façade: runs the enabled families (goldbot/strategies) and applies
+the shared filters (daily trend, session, news veto, long-only).
 
-Signal (evaluated on bar close, executed on next bar open):
-  LONG  when close > Donchian upper, EMA fast > EMA slow, ADX >= adx_min
-  SHORT when close < Donchian lower, EMA fast < EMA slow, ADX >= adx_min
-News sentiment in [-1, 1] (positive = bullish gold) can veto trades that go
-against a strong news bias. Exits: ATR stop, R-multiple take profit, ATR
-trailing stop after price moves 1R in favour.
-
-Why this design: gold trends persistently around macro shocks (rates, USD,
-geopolitics); breakout + trend filter is the most robust family in public
-research for XAU, and the news filter avoids fading strong headline flows.
+Signals are evaluated on bar close and executed on the next bar open. Exits
+(ATR stop, R-multiple take profit, trailing after 1R, time stop, per-family
+hard exit) and sizing live in backtest.py / engine.py and are identical in both.
 """
 from __future__ import annotations
-
-from dataclasses import dataclass
 
 import pandas as pd
 
 from .config import StrategyParams
-from .indicators import adx, atr, donchian, ema
+from .ensemble import Selector
+from .indicators import atr
+from .strategies import REGISTRY
+from .strategies.base import Signal, none
+
+__all__ = ["Signal", "Selector", "prepare", "signal_at", "candidates_at", "warmup_bars",
+           "daily_trend", "in_session", "families"]
 
 
-@dataclass
-class Signal:
-    side: int          # +1 long, -1 short, 0 none
-    entry_ref: float   # reference price (bar close)
-    stop: float
-    take_profit: float
-    atr: float
-    reason: str
+def families(p: StrategyParams) -> list[str]:
+    names = [n for n in (p.strategies or ["breakout"]) if n in REGISTRY]
+    return names or ["breakout"]
 
 
 def prepare(df: pd.DataFrame, p: StrategyParams) -> pd.DataFrame:
     out = df.copy()
-    out["ema_fast"] = ema(out["close"], p.ema_fast)
-    out["ema_slow"] = ema(out["close"], p.ema_slow)
     out["atr"] = atr(out, p.atr_period)
-    out["adx"] = adx(out, p.adx_period)
-    out["dc_up"], out["dc_low"] = donchian(out, p.breakout_lookback)
+    for name in families(p):
+        out = REGISTRY[name].prepare(out, p)
     out["daily_trend"] = daily_trend(out["close"], p.daily_trend_days) if p.daily_trend_days else 0.0
     return out
 
@@ -61,32 +52,41 @@ def in_session(ts: pd.Timestamp, p: StrategyParams) -> bool:
 
 
 def warmup_bars(p: StrategyParams) -> int:
-    return max(p.ema_slow, p.breakout_lookback, p.atr_period, p.adx_period,
-               p.daily_trend_days * 23) + 5
+    base = max(REGISTRY[n].warmup(p) for n in families(p))
+    return max(base, p.atr_period + 5, p.daily_trend_days * 23) + 5
 
 
-def signal_at(row: pd.Series, p: StrategyParams, news_sentiment: float = 0.0) -> Signal:
-    none = Signal(0, float(row["close"]), 0.0, 0.0, float(row.get("atr", 0) or 0), "")
-    if pd.isna(row.get("dc_up")) or pd.isna(row.get("atr")) or row["atr"] <= 0:
-        return none
-    close, a = float(row["close"]), float(row["atr"])
-    trending = row["adx"] >= p.adx_min
-    side = 0
-    if trending and close > row["dc_up"] and row["ema_fast"] > row["ema_slow"]:
-        side = 1
-    elif trending and close < row["dc_low"] and row["ema_fast"] < row["ema_slow"]:
-        side = -1
-    if side == 0:
-        return none
-    if p.daily_trend_days and float(row.get("daily_trend", 0.0)) * side <= 0:
-        return Signal(0, close, 0, 0, a, "against daily trend")
+def _filtered(sig: Signal, row: pd.Series, p: StrategyParams, news_sentiment: float) -> Signal:
+    if sig.side == 0:
+        return sig
+    if p.daily_trend_days and float(row.get("daily_trend", 0.0)) * sig.side <= 0:
+        return none(row, "against daily trend")
     if not in_session(row.name, p):
-        return Signal(0, close, 0, 0, a, "outside session")
-
+        return none(row, "outside session")
     weighted = news_sentiment * p.news_weight
-    if abs(news_sentiment) >= p.news_veto_threshold and (weighted * side) < 0:
-        return Signal(0, close, 0, 0, a, f"vetoed by news sentiment {news_sentiment:+.2f}")
+    if abs(news_sentiment) >= p.news_veto_threshold and (weighted * sig.side) < 0:
+        return none(row, f"vetoed by news sentiment {news_sentiment:+.2f}")
+    return sig
 
-    stop = close - side * p.atr_stop_mult * a
-    tp = close + side * p.atr_stop_mult * a * p.take_profit_r
-    return Signal(side, close, stop, tp, a, "breakout long" if side > 0 else "breakout short")
+
+def candidates_at(row: pd.Series, p: StrategyParams, news_sentiment: float = 0.0) -> list[Signal]:
+    """One (possibly empty) signal per enabled family, after the shared filters."""
+    out = []
+    for name in families(p):
+        sig = REGISTRY[name].signal(row, p)
+        sig.strategy = sig.strategy or name
+        out.append(_filtered(sig, row, p, news_sentiment))
+    return out
+
+
+def signal_at(row: pd.Series, p: StrategyParams, news_sentiment: float = 0.0,
+              selector: Selector | None = None) -> Signal:
+    """Single-family: that family's signal. Ensemble: the selector's pick."""
+    cands = candidates_at(row, p, news_sentiment)
+    if len(cands) == 1:
+        return cands[0]
+    chosen = (selector or Selector(families(p), p.ensemble_lookback, p.ensemble_min_score)).pick(cands)
+    if chosen is not None:
+        return chosen
+    reasons = [c.reason for c in cands if c.reason]
+    return none(row, "; ".join(reasons[:2]))

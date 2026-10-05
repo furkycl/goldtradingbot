@@ -23,6 +23,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from .backtest import risk_scale
 from .brokers import make_broker
 from .brokers.paper import PaperBroker
 from .config import ROOT, Settings, StrategyParams
@@ -30,7 +31,7 @@ from .journal import Journal
 from .news import NewsAggregator
 from .risk import RiskManager
 from .safety import redact
-from .strategy import prepare, signal_at, warmup_bars
+from .strategy import Selector, families, prepare, signal_at, warmup_bars
 
 log = logging.getLogger("goldbot.engine")
 
@@ -85,6 +86,8 @@ class Engine:
         saved = self._load_ctl()
         self.paused = bool(saved.get("paused", False))
         self._open: dict[str, dict] = saved.get("open", {})
+        self.selector = Selector(families(params), params.ensemble_lookback, params.ensemble_min_score)
+        self.selector.load(saved.get("selector"))
         self._close_reason: dict[str, str] = {}
         offline = [pid for pid in self._open if pid not in {p.id for p in self.broker.positions()}]
         for pid in offline:
@@ -113,7 +116,8 @@ class Engine:
         import json
         self._ctl.parent.mkdir(parents=True, exist_ok=True)
         tmp = self._ctl.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"paused": self.paused, "open": self._open}, indent=1, default=str))
+        tmp.write_text(json.dumps({"paused": self.paused, "open": self._open,
+                                   "selector": self.selector.to_dict()}, indent=1, default=str))
         tmp.replace(self._ctl)
 
     def set_paused(self, value: bool) -> None:
@@ -130,6 +134,9 @@ class Engine:
                 ct = self.broker.closed_trade(pid) or {}
                 pnl, exit_px = ct.get("pnl"), ct.get("exit")
                 reason = self._close_reason.pop(pid, "broker SL/TP")
+                risk_usd = float(info.get("initial_risk") or 0) * float(info.get("lots") or 0) * self.s.contract_size
+                if pnl is not None and risk_usd:
+                    self.selector.update(info.get("strategy", "breakout"), pnl / risk_usd)
                 self.journal.event("close", time=self._now_iso(), id=pid, side=info.get("side"),
                                    lots=info.get("lots"), price=None if exit_px is None else round(exit_px, 2),
                                    pnl=None if pnl is None else round(pnl, 2),
@@ -193,7 +200,7 @@ class Engine:
             return "no entry: high-impact news blackout"
 
         sent = self.news.sentiment(now)
-        sig = signal_at(row, self.p, sent)
+        sig = signal_at(row, self.p, sent, self.selector)
         if sig.side == 0:
             return f"flat (sentiment {sent:+.2f}) {sig.reason}"
         if self.s.long_only and sig.side < 0:
@@ -209,7 +216,8 @@ class Engine:
         if cost_r > self.s.risk.max_cost_in_r and (self.s.live_enabled or self.s.demo_enabled):
             return (f"no entry: cost {cost_r:.2f}R > max {self.s.risk.max_cost_in_r}R — this venue is too "
                     f"expensive for this strategy (see docs/STRATEGY.md)")
-        lots = self.rm.size_position(eq, entry, stop)
+        median_atr = float(data["atr"].dropna().median())
+        lots = self.rm.size_position(eq, entry, stop, risk_scale(self.p, median_atr, float(row["atr"])))
         if lots <= 0:
             return (f"signal {sig.reason} skipped: equity {eq:.2f} too small for min lot "
                     f"{self.s.min_lot} at {self.s.risk.risk_per_trade_pct}% risk (see docs/STRATEGY.md)")
@@ -217,7 +225,7 @@ class Engine:
         if res.ok:
             self.rm.on_trade_opened()
             p = res.position
-            self._open[p.id] = vars(p).copy()
+            self._open[p.id] = {**vars(p), "strategy": sig.strategy, "hard_exit_bars": sig.hard_exit_bars}
             self._save_ctl()
             self.journal.event("open", time=self._now_iso(), id=p.id, side=p.side, lots=p.lots,
                                price=round(p.entry, 2), stop=stop, take_profit=tp, reason=sig.reason,
@@ -235,11 +243,16 @@ class Engine:
         if pos.stop and ((pos.side > 0 and px <= pos.stop) or (pos.side < 0 and px >= pos.stop)):
             self._close(pos, "client-side stop")
             return
-        # time stop: same rule as the backtest (closed bars only, decided on the closed bar)
+        # hard exit / time stop: same rules as the backtest (closed bars only)
         close = float(row["close"])
-        if self.p.max_hold_bars and pos.opened_at and df is not None and pos.entry:
+        if pos.opened_at and df is not None and pos.entry:
             held = int((df.index[:-1] > pd.Timestamp(pos.opened_at)).sum())
-            if held >= self.p.max_hold_bars and pos.side * (close - pos.entry) < 0.5 * float(row["atr"]):
+            hard = int(self._open.get(pos.id, {}).get("hard_exit_bars") or 0)
+            if hard and held >= hard:
+                self._close(pos, f"hard exit after {held} bars")
+                return
+            if self.p.max_hold_bars and held >= self.p.max_hold_bars and \
+                    pos.side * (close - pos.entry) < 0.5 * float(row["atr"]):
                 self._close(pos, f"time stop after {held} bars")
                 return
         # trailing: same rule as the backtest (initial risk, closed-bar price)
@@ -287,6 +300,9 @@ class Engine:
                  f"halt: {st.halted_reason or 'none'} | news sentiment {self.news.sentiment():+.2f}"]
         for p in pos:
             lines.append(f"open {p.id} {'BUY' if p.side > 0 else 'SELL'} {p.lots} @ {p.entry:.2f} SL {p.stop} TP {p.take_profit}")
+        if len(self.selector.names) > 1:
+            lines.append("strategy scores: " + ", ".join(f"{k} {v:+.2f} (n={self.selector.n.get(k, 0)})"
+                                                         for k, v in self.selector.score.items()))
         return "\n".join(lines)
 
     def request_stop(self, *_):
