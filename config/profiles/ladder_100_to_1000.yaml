@@ -1,0 +1,47 @@
+# ====================== SERMAYE MERDİVENİ PROFİLİ ======================
+# İstenen plan: başta düşük bakiyeyle daha yüksek risk, 1.000$'a ulaşınca
+# 1.000$ aynı kaldıraçla devam ederken üstü kaldıraçsız çekirdeğe gider.
+# Bot hesaplar arasında para taşıyamaz; eşik aşıldığında Telegram'dan haber
+# verir ve sadece 1.000$'ı riske etmeye devam eder.
+#
+# Risk basamakları (kod tavanı %3; Monte Carlo'ya göre %5+ iflas bölgesi):
+#   0–500$     : işlem başına %2  (güven skoru yüksek işlemlerde ×1,5 = %3)
+#   500–1.000$ : %1,5
+#   1.000$+    : %1  (ve sadece 1.000$'lık pot riske edilir)
+# Güven skoru (haber yönü + trend + seans + oynaklık + aile uyumu) düşükse
+# risk ×0,5'e iner. "Garanti işlem" yoktur; bu, hizalanmış işlemlere daha
+# çok, hizalanmamışlara daha az risk vermektir.
+# UYARI: 100$ ile standart 0,01 lot hesapta bot neredeyse hiç işlem açamaz
+# (docs/STRATEGY.md §7). Bu profil 0,001 lot sunan mikro hesap içindir.
+# =======================================================================
+mode: paper
+broker: mt5
+symbol: XAUUSD
+starting_equity: 100
+
+commission_per_lot: 7.0
+spread: 0.30
+financing_pct_per_year: 5.0
+contract_size: 100
+min_lot: 0.001            # mikro/cent hesap; standart hesapta 0.01
+lot_step: 0.001
+
+poll_seconds: 30
+news_blackout_minutes: 30
+
+risk:
+  risk_per_trade_pct: 1.0
+  risk_ladder: [[0, 2.0], [500, 1.5], [1000, 1.0]]
+  trading_cap: 1000
+  sweep_min: 50
+  max_daily_loss_pct: 5.0
+  max_drawdown_pct: 25.0
+  max_leverage: 10.0
+  max_open_positions: 2
+  max_total_risk_pct: 3.0
+  max_trades_per_day: 4
+  max_cost_in_r: 0.05
+
+broker_options:
+  symbol: XAUUSD
+  magic: 770077
