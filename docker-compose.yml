@@ -1,0 +1,11 @@
+services:
+  goldbot:
+    build: .
+    restart: unless-stopped
+    env_file: .env            # secrets stay on your machine, never in the image
+    volumes:
+      - ./state:/app/state    # risk state, journal, logs survive restarts/upgrades
+      - ./config:/app/config:ro
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}

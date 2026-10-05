@@ -92,3 +92,16 @@ def test_market_hours():
     assert market_open(datetime(2026, 10, 4, 23, tzinfo=timezone.utc))      # Sunday after open
     assert market_open(datetime(2026, 10, 5, 13, tzinfo=timezone.utc))      # Monday
     assert not market_open(datetime(2026, 10, 9, 21, 30, tzinfo=timezone.utc))  # Friday close
+
+
+def test_dotenv_loader(tmp_path, monkeypatch):
+    import os
+    from goldbot.config import load_dotenv
+    f = tmp_path / ".env"
+    f.write_text('# c\nGB_A=1\nexport GB_B="two words"\nGB_C=\nGB_D=keep\nnot a line\n')
+    monkeypatch.delenv("GB_A", raising=False); monkeypatch.delenv("GB_B", raising=False)
+    monkeypatch.setenv("GB_D", "env-wins")
+    assert load_dotenv(f) == 2
+    assert os.environ["GB_A"] == "1" and os.environ["GB_B"] == "two words"
+    assert os.environ["GB_D"] == "env-wins" and "GB_C" not in os.environ
+    monkeypatch.delenv("GB_A"); monkeypatch.delenv("GB_B")

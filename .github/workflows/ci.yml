@@ -23,3 +23,14 @@ jobs:
       - name: Auto branches may only change params and reports
         if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'auto/')
         run: python scripts/check_auto_diff.py origin/${{ github.base_ref }}
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build image
+        run: docker build -t goldbot:ci .
+      - name: Smoke test image
+        run: |
+          docker run --rm goldbot:ci --help
+          docker run --rm goldbot:ci backtest --equity 10000

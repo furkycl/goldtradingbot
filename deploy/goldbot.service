@@ -1,0 +1,21 @@
+# Linux (VPS) systemd unit for paper mode or ccxt.
+#   sudo cp deploy/goldbot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now goldbot
+#   journalctl -u goldbot -f
+[Unit]
+Description=goldbot XAU/USD trading bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=goldbot
+WorkingDirectory=/opt/goldtradingbot
+ExecStart=/opt/goldtradingbot/.venv/bin/python -m goldbot run
+Restart=always
+RestartSec=30
+KillSignal=SIGTERM
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -16,7 +16,7 @@ import argparse
 import json
 import logging
 
-from .config import load_params, load_settings
+from .config import load_dotenv, load_params, load_settings
 
 
 def _data(args):
@@ -49,6 +49,7 @@ def main(argv=None) -> None:
     args = ap.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    load_dotenv()
     settings, params = load_settings(), load_params()
 
     if args.cmd == "backtest":
