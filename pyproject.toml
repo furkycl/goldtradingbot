@@ -1,6 +1,6 @@
 [project]
 name = "goldbot"
-version = "0.2.1"
+version = "0.3.0"
 description = "Risk-first, news-aware XAU/USD trading bot (paper/demo by default)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,3 +33,4 @@ ignore = ["E701", "E702", "B008", "B905"]
 # HTML / markdown report templates are clearer on one line
 "goldbot/forward.py" = ["E501"]
 "scripts/validate.py" = ["E501"]
+"scripts/compare_strategies.py" = ["E501"]

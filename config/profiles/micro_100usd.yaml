@@ -1,0 +1,44 @@
+# ===================== 100$ İLE GERÇEK MATEMATİK =====================
+# Standart XAUUSD CFD: min 0,01 lot = 1 ons. Altın ~4.000$ iken saatlik ATR
+# ~15–30$. 1 onsluk pozisyonda 3 ATR stop = 45–90$ risk = hesabın %45–90'ı.
+# Bu profil %1 riskle çalışır; stop mesafesi 1$'ı aşan HER sinyal reddedilir,
+# yani standart bir hesapta bot neredeyse hiç işlem açmaz. BU BİR KORUMADIR.
+#
+# 100$ ile bot işletmenin tek dürüst yolu, 0,001 lot (0,1 ons) sunan bir
+# "mikro/cent" hesap: o zaman %1 risk = 1$ = 10$/oz stop; hâlâ dar ama
+# düşük oynaklıkta işlem açılır. Maliyet (spread 0,30$ + komisyon) 10$'lık
+# stopun ~%4'ü = 0,04R; maliyet koruması (0,05R) sınırında çalışır.
+#
+# reports/validation-2026-10-05.md Monte Carlo: işlem başına %1 riskle 2 yıllık
+# (iyimser) veride medyan yıllık getiri ~%18. 100$'dan 1.000.000$'a bu hızla
+# ~55 yıl. Kaldıracı artırmak süreyi kısaltmaz, iflas olasılığını artırır.
+# En mantıklı yol: 100$'ı kaldıraçsız altında tut (goldbot core), botu demo
+# hesapta kanıtla, sermaye büyüdükçe (≥ 2.000$) canlıya geç.
+# =====================================================================
+mode: paper
+broker: mt5
+symbol: XAUUSD
+starting_equity: 100
+
+commission_per_lot: 7.0
+spread: 0.30
+financing_pct_per_year: 5.0
+contract_size: 100
+min_lot: 0.001          # SADECE mikro/cent hesap sunan SPK lisanslı kurumda; yoksa 0.01
+lot_step: 0.001
+
+poll_seconds: 30
+news_blackout_minutes: 30
+
+risk:
+  risk_per_trade_pct: 1.0
+  max_daily_loss_pct: 3.0
+  max_drawdown_pct: 20.0
+  max_leverage: 10.0
+  max_open_positions: 1
+  max_trades_per_day: 3
+  max_cost_in_r: 0.05
+
+broker_options:
+  symbol: XAUUSD
+  magic: 770077

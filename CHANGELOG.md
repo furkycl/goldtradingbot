@@ -1,5 +1,13 @@
 # Değişiklik günlüğü
 
+## 0.3.0 — 5 Ekim 2026
+- Strateji kütüphanesi: kırılım, sıkışma, gece seansı, haber şoku, ortalamaya dönüş; ortak çıkış ve risk kuralları.
+- Performansa göre seçen ensemble (yedeğe alma, yön çatışmasında bekleme, kalıcı skor).
+- Aile başına zorunlu çıkış; isteğe bağlı ATR'ye göre ölçeklenen risk.
+- `scripts/compare_strategies.py` ve aylık çalıştırma: rastgeleye karşı p-değeri, 2× maliyet, walk-forward, aile bazında katkı.
+- 100$ (mikro hesap) ve agresif (%2 risk) profilleri, iflas matematiğiyle.
+- Motor ile backtest ensemble dahil kuruşu kuruşuna aynı (testli).
+
 ## 0.2.1 — 5 Ekim 2026
 İkinci bağımsız inceleme bulguları:
 - Gizli anahtarlar loglarda maskeleniyor.

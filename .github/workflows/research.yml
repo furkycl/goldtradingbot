@@ -20,6 +20,7 @@ concurrency:
 jobs:
   variants:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
         with:
@@ -36,6 +37,8 @@ jobs:
           python -m goldbot probe-feeds | tee "reports/feeds-$(date -u +%F).txt" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Compare variants on real data
         run: python scripts/compare_variants.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Compare strategy families and ensembles on real data
+        run: python scripts/compare_strategies.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Publish report (branch -> PR -> merge, or fast-forward)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

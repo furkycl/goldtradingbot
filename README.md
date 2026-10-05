@@ -17,7 +17,7 @@ Sadece altın (XAU/USD) işlem yapan, haber takipli ve **önce sermayeyi koruyan
 
 | Katman | İçerik |
 |---|---|
-| **Strateji** | Donchian kırılımı + EMA trend filtresi. Sinyal mum kapanışında, emir sonraki mumun açılışında verilir. Zaman stopu: 12 mum sonra kâra geçmemişse çıkış. Parametreler: `config/params.yaml`. |
+| **Strateji** | Beş giriş ailesi (`goldbot/strategies/`): kırılım, sıkışma, gece seansı, haber şoku, ortalamaya dönüş. Hepsi aynı çıkış ve risk kurallarını paylaşır; performansa göre seçen bir ensemble hangisinin işlem açacağına karar verir. Varsayılan: sadece kırılım, çünkü diğerleri henüz gerçek veride kanıtlanmadı. Parametreler: `config/params.yaml`. |
 | **Stop / kâr al** | Her emirde zorunlu ATR stop'u ve R-katı kâr hedefi. 1R kârdan sonra iz süren stop devreye girer. Stoplar **broker tarafında** durur; stopsuz emir kodda reddedilir. |
 | **Risk** | <ul><li>İşlem başına %1 risk</li><li>Günlük %3 zarar limiti</li><li>Zirveden %20 düşüşte kalıcı durdurma</li><li>Azami 10:1 kaldıraç (SPK)</li><li>En fazla 1 pozisyon, günde en fazla 4 işlem</li><li>Maliyet koruması: işlem maliyeti riskin %5'ini aşarsa işlem açılmaz</li></ul>Tüm limitler yeniden başlatmada **korunur**. |
 | **Haber** | <ul><li>10 doğrulanmış RSS kaynağı, isteğe bağlı Finnhub ve Telegram kanalları</li><li>Altına özel duygu skoru (Türkçe dahil); güçlü ters habere karşı veto</li><li>CPI, NFP ve FOMC'nin ±30 dakikasında yeni işlem yok</li></ul> |
@@ -51,6 +51,7 @@ python -m goldbot backtest --yf --equity 10000
 python -m goldbot reset-halt             # kalıcı durdurmayı temizle (botu durdurup inceledikten sonra)
 python -m goldbot telegram-login         # Telegram kanallarını okumak için bir kerelik giriş
 python scripts/validate.py               # tam istatistiksel doğrulama (internet gerekir)
+python scripts/compare_strategies.py     # strateji aileleri ve ensemble karşılaştırması
 ```
 
 ## Gerçek parayla işleme geçmek (bunu sadece sen yapabilirsin)
@@ -81,7 +82,7 @@ Aşırı uyuma karşı önlemler:
 
 ```
 goldbot/
-  strategy.py, indicators.py     sinyal, göstergeler
+  strategy.py, strategies/       strateji aileleri + ortak filtreler; ensemble.py seçici
   risk.py                        lot hesabı, limitler, kalıcı durum
   backtest.py, optimize.py       maliyetli backtest, walk-forward + null-test kalibreli kabul
   engine.py                      canlı döngü (backtest ile aynı işlemleri üretir; testli)
@@ -91,7 +92,7 @@ goldbot/
   news/                          RSS, Telegram, takvim, duygu skoru
   brokers/                       paper, mt5, ccxt
 scripts/                         validate, self_improve, compare_variants, null_test, check_auto_diff, windows/
-config/                          settings.yaml + validation.yaml (senin), params.yaml (döngünün)
+config/                          settings.yaml + validation.yaml (senin), params.yaml (döngünün), profiles/ (micro_100usd, aggressive)
 docs/                            STRATEGY.md (karar), RESEARCH.md (kaynaklar), DEPLOY.md (kurulum)
 reports/                         otomatik raporlar
 ```
