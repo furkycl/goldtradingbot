@@ -30,7 +30,7 @@ Sadece altın (XAU/USD) işlem yapan, haber takipli ve **önce sermayeyi koruyan
 ```bash
 git clone https://github.com/furkycl/goldtradingbot && cd goldtradingbot
 python -m venv .venv && source .venv/bin/activate      # Windows: scripts\windows\setup.bat
-pip install -r requirements.txt
+pip install -r requirements.txt && pip install -e .     # `goldbot` komutu da kurulur
 cp .env.example .env                                     # Telegram vb. (asla commit etme)
 pytest -q
 python -m goldbot run                                    # sanal işlem
@@ -48,7 +48,8 @@ python -m goldbot core                   # kaldıraçsız altın: trend ve zirve
 python -m goldbot news                   # güncel başlıklar ve duygu skoru
 python -m goldbot probe-feeds            # haber kaynakları canlı mı?
 python -m goldbot backtest --yf --equity 10000
-python -m goldbot reset-halt             # kalıcı durdurmayı temizle (inceledikten sonra)
+python -m goldbot reset-halt             # kalıcı durdurmayı temizle (botu durdurup inceledikten sonra)
+python -m goldbot telegram-login         # Telegram kanallarını okumak için bir kerelik giriş
 python scripts/validate.py               # tam istatistiksel doğrulama (internet gerekir)
 ```
 

@@ -72,8 +72,13 @@ jobs:
             gh pr merge "$BR" --squash --delete-branch
           else
             echo "::warning::Actions may not create PRs in this repo; fast-forwarding main from the tested branch instead"
-            git fetch origin main
-            git rebase origin/main
-            git push origin "HEAD:main"
-            git push origin --delete "$BR"
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              python scripts/check_auto_diff.py origin/main
+              pytest -q                                   # test the exact tree that lands on main
+              if git push origin "HEAD:main"; then break; fi
+              sleep $((attempt * 20))
+            done
+            git push origin --delete "$BR" || true
           fi

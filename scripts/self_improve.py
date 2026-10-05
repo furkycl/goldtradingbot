@@ -1,10 +1,13 @@
 """One iteration of the self-improvement loop (run by .github/workflows/self-improve.yml).
 
-1. Download fresh gold data (falls back to synthetic if offline).
-2. Walk-forward search around current params (config/params.yaml).
-3. If a candidate beats the baseline out-of-sample AND passes guardrails,
-   write it to config/params.yaml and a report to reports/; the workflow then
-   opens a PR on a new branch, and auto-merges it only after CI passes.
+1. Download fresh gold data (no data -> no change).
+2. Walk-forward search on data BEFORE the sealed holdout.
+3. A candidate must beat the baseline out-of-sample (paired folds) AND beat it on
+   the sealed holdout by a margin. The holdout restarts after every accepted
+   change (the last acceptance date), so the same unseen data is never reused
+   for two decisions.
+4. The workflow runs the full test suite on the changed tree, then branch ->
+   commit -> PR -> merge (or a tested fast-forward if Actions may not open PRs).
 
 It never touches config/settings.yaml (broker, live mode, risk limits).
 Exit code: 0 = improvement written, 78 = nothing to change.
@@ -28,7 +31,23 @@ from goldbot.config import ROOT, load_params, load_settings, save_params  # noqa
 from goldbot.optimize import score, search  # noqa: E402
 
 VALID = yaml.safe_load((ROOT / "config" / "validation.yaml").read_text())
-HOLDOUT_START = pd.Timestamp(VALID["holdout_start"], tz="UTC")
+MIN_RESEARCH_BARS = 3000
+
+
+def effective_holdout_start() -> pd.Timestamp:
+    """max(configured start, day after the last accepted change)."""
+    start = pd.Timestamp(VALID["holdout_start"], tz="UTC")
+    for f in sorted((ROOT / "reports").glob("self-improve-*.json")):
+        try:
+            r = json.loads(f.read_text())
+        except ValueError:
+            continue
+        if r.get("accepted"):
+            start = max(start, pd.Timestamp(r["date"], tz="UTC") + pd.Timedelta(days=1))
+    return start
+
+
+HOLDOUT_START = effective_holdout_start()
 
 
 def _summary(ev: dict) -> dict:
@@ -51,6 +70,10 @@ def main() -> int:
     seed = int(datetime.now(timezone.utc).strftime("%Y%m%d"))
     cut = int(df.index.searchsorted(HOLDOUT_START))
     research_df = df.iloc[:cut]
+    if len(research_df) < MIN_RESEARCH_BARS:
+        print(f"only {len(research_df)} research bars before the holdout ({HOLDOUT_START.date()}); "
+              f"a human should move holdout_start in config/validation.yaml")
+        return 78
     n_hold = len(df) - cut
     result = search(research_df, settings, params, trials=60, seed=seed)
 

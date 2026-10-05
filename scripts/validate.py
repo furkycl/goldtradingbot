@@ -265,12 +265,15 @@ def main() -> int:
     current = load_params()
     res = {"date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "hourly": [], "daily": [], "monte_carlo": []}
 
-    gc_h = data.load_yfinance("GC=F", "730d", "1h")
+    import yaml
+    hold = pd.Timestamp(yaml.safe_load((ROOT / "config" / "validation.yaml").read_text())["holdout_start"], tz="UTC")
+    # hourly strategy research never looks at the sealed holdout (see self_improve.py)
+    gc_h = data.load_yfinance("GC=F", "730d", "1h").loc[: hold - pd.Timedelta(seconds=1)]
     res["hourly"].append(hourly_block(gc_h, settings, current, "GC=F 1h, current params"))
     res["hourly"].append(hourly_block(gc_h, settings, ORIGINAL_DEFAULTS, "GC=F 1h, original defaults"))
     res["venues"] = venue_block(gc_h, settings, current)
     try:
-        px_h = data.load_yfinance("PAXG-USD", "730d", "1h")
+        px_h = data.load_yfinance("PAXG-USD", "730d", "1h").loc[: hold - pd.Timedelta(seconds=1)]
         px_set = replace(settings); px_set.financing_pct_per_year = 0.0
         res["hourly"].append(hourly_block(px_h, px_set, current, "PAXG-USD 1h (no roll gaps), current params"))
     except Exception as exc:

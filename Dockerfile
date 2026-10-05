@@ -8,10 +8,12 @@ RUN pip install -r requirements.txt telethon ccxt
 COPY goldbot ./goldbot
 COPY config ./config
 COPY scripts ./scripts
-RUN useradd --create-home --uid 10001 goldbot && mkdir -p /app/state && chown -R goldbot /app/state
-USER goldbot
+COPY deploy/docker-entrypoint.sh /usr/local/bin/goldbot-entrypoint
+RUN useradd --create-home --uid 10001 goldbot && mkdir -p /app/state && chown -R goldbot /app/state \
+    && chmod +x /usr/local/bin/goldbot-entrypoint
 VOLUME ["/app/state"]
-HEALTHCHECK --interval=10m --timeout=10s --start-period=2m \
-  CMD python -c "import pathlib,time,sys; p=[*pathlib.Path('/app/state').glob('*/goldbot.log')]; sys.exit(0 if p and time.time()-max(x.stat().st_mtime for x in p)<7200 else 1)"
-ENTRYPOINT ["python", "-m", "goldbot"]
+# healthy if the log is fresh, or the gold market is closed (weekends)
+HEALTHCHECK --interval=10m --timeout=20s --start-period=5m \
+  CMD setpriv --reuid=goldbot --regid=goldbot --init-groups python -m goldbot health
+ENTRYPOINT ["goldbot-entrypoint"]
 CMD ["run"]
