@@ -6,7 +6,9 @@ def make_broker(settings) -> Broker:
     """Live brokers are only constructed when settings.live_enabled is True."""
     name = settings.broker
     if name == "paper" or not (settings.live_enabled or settings.demo_enabled):
-        return PaperBroker(settings)
+        from ..config import ROOT
+        mode = "live" if settings.live_enabled else ("demo" if settings.demo_enabled else "paper")
+        return PaperBroker(settings, state_path=ROOT / "state" / mode / "paper.json")
     if name == "mt5":
         from .mt5 import MT5Broker
         return MT5Broker(settings)

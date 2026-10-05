@@ -11,7 +11,7 @@ import pandas as pd
 from ..config import ROOT
 from .base import Broker, OrderResult, Position
 
-STATE = ROOT / "state" / "paper.json"
+STATE = ROOT / "state" / "paper" / "paper.json"
 
 
 class PaperBroker(Broker):
@@ -38,7 +38,7 @@ class PaperBroker(Broker):
     def _save(self) -> None:
         if not self.state_path:
             return
-        self.state_path.parent.mkdir(exist_ok=True)
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
         self.state_path.write_text(json.dumps({
             "cash": self.cash,
             "positions": {k: vars(v) for k, v in self._pos.items()},
@@ -60,6 +60,18 @@ class PaperBroker(Broker):
                            interval=timeframe, min_bars=min(count, 50))
         self._cache, self._cache_t = df, time.time()
         return df.tail(count)
+
+    def charge_financing(self, t0, t1) -> None:
+        """Overnight swap on open notional, same model as the backtest."""
+        rate = getattr(self.s, "financing_pct_per_year", 0.0) / 100
+        if not rate or not self._pos:
+            return
+        secs = (pd.Timestamp(t1) - pd.Timestamp(t0)).total_seconds()
+        bid, ask = self.price()
+        mid = (bid + ask) / 2
+        for p in self._pos.values():
+            self.cash -= p.lots * self.s.contract_size * mid * rate * secs / (365 * 86400)
+        self._save()
 
     def closed_trade(self, position_id: str) -> dict | None:
         for c in reversed(self.closed):

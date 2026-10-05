@@ -39,6 +39,10 @@ class MT5Broker(Broker):
         if settings.mode == "demo" and not is_demo:
             mt5.shutdown()
             raise RuntimeError("mode=demo but the MT5 account is NOT a demo account; refusing to trade")
+        # MT5 bar times are BROKER SERVER time; measure the offset to UTC once
+        import time as _t
+        tick = mt5.symbol_info_tick(settings.broker_options.get("symbol", settings.symbol))
+        self.server_offset_h = round((tick.time - _t.time()) / 3600) if tick else 0
         info = mt5.symbol_info(self.symbol)
         if info is None or not mt5.symbol_select(self.symbol, True):
             raise RuntimeError(f"symbol {self.symbol} not available at this broker")
@@ -67,7 +71,7 @@ class MT5Broker(Broker):
     def candles(self, timeframe: str, count: int) -> pd.DataFrame:
         rates = self.mt5.copy_rates_from_pos(self.symbol, getattr(self.mt5, TF[timeframe]), 0, count)
         df = pd.DataFrame(rates)
-        df.index = pd.to_datetime(df["time"], unit="s", utc=True)
+        df.index = pd.to_datetime(df["time"], unit="s", utc=True) - pd.Timedelta(hours=self.server_offset_h)
         return df[["open", "high", "low", "close"]]
 
     def positions(self) -> list[Position]:
@@ -76,7 +80,7 @@ class MT5Broker(Broker):
             if p.magic != self.magic:
                 continue
             side = 1 if p.type == self.mt5.POSITION_TYPE_BUY else -1
-            opened = pd.Timestamp(p.time, unit="s", tz="UTC").isoformat()
+            opened = (pd.Timestamp(p.time, unit="s", tz="UTC") - pd.Timedelta(hours=self.server_offset_h)).isoformat()
             out.append(Position(str(p.ticket), side, p.volume, p.price_open, p.sl, p.tp, opened,
                                 self._risk.get(str(p.ticket), 0.0)))
         return out
@@ -84,6 +88,10 @@ class MT5Broker(Broker):
     def open(self, side: int, lots: float, stop: float, take_profit: float) -> OrderResult:
         if not stop:
             return OrderResult(False, message="refused: no stop loss")
+        if self.s.mode == "demo":
+            acc = self.mt5.account_info()
+            if acc is None or acc.trade_mode != self.mt5.ACCOUNT_TRADE_MODE_DEMO:
+                return OrderResult(False, message="mode=demo but terminal is no longer on a demo account")
         bid, ask = self.price()
         req = {
             "action": self.mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "volume": lots,

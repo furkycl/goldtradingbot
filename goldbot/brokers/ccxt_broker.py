@@ -13,6 +13,7 @@ crypto-asset service provider list) before using it.
 """
 from __future__ import annotations
 
+import json
 import os
 
 import pandas as pd
@@ -44,7 +45,15 @@ class CCXTBroker(Broker):
         settings.min_lot = float((m.get("limits", {}).get("amount", {}) or {}).get("min") or 0.0001)
         settings.lot_step = float(10 ** -(m.get("precision", {}).get("amount") or 4)) \
             if isinstance(m.get("precision", {}).get("amount"), int) else settings.min_lot
-        self.stops: dict[str, tuple[float, float]] = {}
+        # only the quantity THIS bot bought is managed; other holdings (e.g. an
+        # unlevered core position) are never touched. Persisted across restarts.
+        from ..config import ROOT
+        self._path = ROOT / "state" / settings.mode / "ccxt_position.json"
+        self.stops: dict[str, dict] = json.loads(self._path.read_text()) if self._path.exists() else {}
+
+    def _save(self) -> None:
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._path.write_text(json.dumps(self.stops, indent=1))
 
     def equity(self) -> float:
         bal = self.ex.fetch_balance()
@@ -63,47 +72,79 @@ class CCXTBroker(Broker):
         return df[["open", "high", "low", "close", "volume"]]
 
     def positions(self) -> list[Position]:
-        base = self.symbol.split("/")[0]
-        amt = float(self.ex.fetch_balance()["total"].get(base, 0))
-        if amt < self.s.min_lot:
+        meta = self.stops.get("spot")
+        if not meta:
             return []
-        meta = self.stops.get("spot", {})
-        return [Position("spot", 1, amt, meta.get("entry", 0.0), meta.get("stop", 0.0),
-                         meta.get("tp", 0.0), meta.get("opened_at", ""), meta.get("initial_risk", 0.0))]
+        base = self.symbol.split("/")[0]
+        held = float(self.ex.fetch_balance()["total"].get(base, 0))
+        qty = min(held, float(meta["qty"]))
+        if qty < self.s.min_lot:          # sold by the exchange stop (or manually)
+            return []
+        return [Position("spot", 1, qty, meta["entry"], meta["stop"], meta["tp"],
+                         meta["opened_at"], meta["initial_risk"])]
+
+    def _place_stop(self, qty: float, stop: float) -> str | None:
+        """Exchange-side stop. Tries ccxt's unified stopLossPrice, then Binance-style."""
+        attempts = [
+            lambda: self.ex.create_order(self.symbol, "market", "sell", qty, None, {"stopLossPrice": stop}),
+            lambda: self.ex.create_order(self.symbol, "STOP_LOSS_LIMIT", "sell", qty, stop * 0.998,
+                                         {"stopPrice": stop}),
+        ]
+        for f in attempts:
+            try:
+                return str(f().get("id"))
+            except Exception:
+                continue
+        return None
 
     def open(self, side: int, lots: float, stop: float, take_profit: float) -> OrderResult:
         if side < 0:
             return OrderResult(False, message="spot adapter is long-only")
         if not stop:
             return OrderResult(False, message="refused: no stop loss")
+        if self.stops.get("spot"):
+            return OrderResult(False, message="already holding a bot position")
         o = self.ex.create_market_buy_order(self.symbol, lots)
-        import pandas as pd
         entry = float(o.get("average") or o.get("price") or self.price()[1])
-        self.stops["spot"] = {"stop": stop, "tp": take_profit, "entry": entry,
+        qty = float(o.get("filled") or lots)
+        oid = self._place_stop(qty, stop)
+        if oid is None:
+            # never leave a position without an exchange-side stop
+            self.ex.create_market_sell_order(self.symbol, qty)
+            return OrderResult(False, message="exchange refused the stop order; position closed immediately")
+        self.stops["spot"] = {"qty": qty, "stop": stop, "tp": take_profit, "entry": entry, "stop_id": oid,
                               "opened_at": pd.Timestamp.now(tz="UTC").isoformat(),
                               "initial_risk": abs(entry - stop)}
-        try:
-            self.ex.create_order(self.symbol, "STOP_LOSS_LIMIT", "sell", lots, stop * 0.998,
-                                 {"stopPrice": stop})
-        except Exception:
-            pass  # engine enforces the stop client-side
+        self._save()
         m = self.stops["spot"]
-        return OrderResult(True, Position("spot", 1, lots, entry, stop, take_profit, m["opened_at"], m["initial_risk"]))
+        return OrderResult(True, Position("spot", 1, qty, entry, stop, take_profit, m["opened_at"], m["initial_risk"]))
 
     def modify_stop(self, position_id: str, new_stop: float) -> bool:
-        if "spot" in self.stops:
-            self.stops["spot"]["stop"] = new_stop
-            return True
-        return False
+        m = self.stops.get("spot")
+        if not m:
+            return False
+        oid = self._place_stop(m["qty"], new_stop)       # place the new stop first ...
+        if oid is None:
+            return False                                 # ... keep the old one if that fails
+        try:
+            self.ex.cancel_order(m["stop_id"], self.symbol)
+        except Exception:
+            pass
+        m.update(stop=new_stop, stop_id=oid)
+        self._save()
+        return True
 
     def close(self, position_id: str) -> bool:
+        m = self.stops.get("spot")
+        if not m:
+            return False
         try:
-            self.ex.cancel_all_orders(self.symbol)
+            self.ex.cancel_order(m["stop_id"], self.symbol)
         except Exception:
             pass
         pos = self.positions()
-        if not pos:
-            return False
-        self.ex.create_market_sell_order(self.symbol, pos[0].lots)
+        if pos:
+            self.ex.create_market_sell_order(self.symbol, pos[0].lots)
         self.stops.pop("spot", None)
+        self._save()
         return True

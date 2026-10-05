@@ -254,8 +254,9 @@ def test_engine_entries_match_backtest(df, tmp_path):
     assert n >= 5
     assert eng_entries[:n] == bt_entries[:n]
     for c, t in zip(broker.closed[:n], bt.trades[:n]):
-        assert c["reason"].replace("manual", "time_stop") in (t.reason, "manual")
+        assert c["reason"].replace("manual", "time_stop") == t.reason
         assert abs(c["entry"] - t.entry) < 1e-6
+        assert abs(c["pnl"] - t.pnl) < 0.05          # same exits, incl. time stops (to the cent)
 
 
 # ------------------------------------------------------------- audit fixes

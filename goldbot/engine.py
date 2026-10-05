@@ -29,6 +29,7 @@ from .config import ROOT, Settings, StrategyParams
 from .journal import Journal
 from .news import NewsAggregator
 from .risk import RiskManager
+from .safety import redact
 from .strategy import prepare, signal_at, warmup_bars
 
 log = logging.getLogger("goldbot.engine")
@@ -39,20 +40,22 @@ TF_SECONDS = {"1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14
 def notify(text: str) -> None:
     """Optional Telegram notifications to YOUR phone (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)."""
     token, chat = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
+    text = redact(text)
     log.info(text)
     if token and chat:
         try:
             import requests
             requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                          json={"chat_id": chat, "text": text}, timeout=5)
+                          json={"chat_id": chat, "text": text[:4000]}, timeout=5)
         except Exception as exc:
-            log.warning("notify failed: %s", exc)
+            log.warning("notify failed: %s", type(exc).__name__)
 
 
 def market_open(now: datetime) -> bool:
-    """Spot gold / CFD hours (approx., UTC): closed Fri 21:00 -> Sun 22:00 and daily 21:00-22:00."""
+    """Spot gold / CFD hours (approx., UTC): closed Fri 21:00 -> Sun 23:00 (22:00 in
+    summer; the later time avoids false stale-feed alarms) and daily 21:00-22:00."""
     wd, h = now.weekday(), now.hour
-    if wd == 5 or (wd == 4 and h >= 21) or (wd == 6 and h < 22):
+    if wd == 5 or (wd == 4 and h >= 21) or (wd == 6 and h < 23):
         return False
     return h != 21
 
@@ -76,16 +79,46 @@ class Engine:
         self.rm.attach(self.state_dir / "risk.json")
         self.journal = Journal(self.state_dir, self.mode)
         self.last_bar = None
-        self.paused = False
         self.stop_evt = threading.Event()
         self.lock = threading.RLock()          # step() vs remote commands
-        self._open: dict[str, dict] = {p.id: vars(p).copy() for p in self.broker.positions()}
+        self._ctl = self.state_dir / "engine.json"
+        saved = self._load_ctl()
+        self.paused = bool(saved.get("paused", False))
+        self._open: dict[str, dict] = saved.get("open", {})
         self._close_reason: dict[str, str] = {}
+        offline = [pid for pid in self._open if pid not in {p.id for p in self.broker.positions()}]
+        for pid in offline:
+            self._close_reason[pid] = "closed while the bot was offline"
+        self._sync_positions()                 # journal closes that happened while we were down
+        for p in self.broker.positions():      # adopt positions we did not know about
+            self._open.setdefault(p.id, vars(p).copy())
+        self._save_ctl()
         self._stale_notified = False
         self._last_err = 0.0
         notify(f"goldbot started in {self.mode.upper()} mode, broker={type(self.broker).__name__}, "
                f"equity={self.broker.equity():.2f}"
-               + (f" — HALTED: {self.rm.state.halted_reason}" if self.rm.state.halted_reason else ""))
+               + (f" — HALTED: {self.rm.state.halted_reason}" if self.rm.state.halted_reason else "")
+               + (" — PAUSED (send /resume)" if self.paused else "")
+               + (f" — journaled {len(offline)} close(s) from while offline" if offline else ""))
+
+    # ------------------------------------------------------------ persistence
+    def _load_ctl(self) -> dict:
+        import json
+        try:
+            return json.loads(self._ctl.read_text()) if self._ctl.exists() else {}
+        except ValueError:
+            return {}
+
+    def _save_ctl(self) -> None:
+        import json
+        self._ctl.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self._ctl.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"paused": self.paused, "open": self._open}, indent=1, default=str))
+        tmp.replace(self._ctl)
+
+    def set_paused(self, value: bool) -> None:
+        self.paused = value
+        self._save_ctl()
 
     # ------------------------------------------------------------ bookkeeping
     def _sync_positions(self) -> None:
@@ -102,6 +135,7 @@ class Engine:
                                    pnl=None if pnl is None else round(pnl, 2),
                                    reason=reason, equity=round(self.broker.equity(), 2))
                 notify(f"CLOSED {pid} ({reason}) pnl {pnl if pnl is not None else '?'}")
+                self._save_ctl()
 
     def _now_iso(self) -> str:
         """Bar time in replays/backtests, wall-clock time live."""
@@ -109,9 +143,13 @@ class Engine:
             return pd.Timestamp(self.last_bar).isoformat()
         return datetime.now(timezone.utc).isoformat()
 
-    def _close(self, pos, reason: str) -> None:
+    def _close(self, pos, reason: str) -> bool:
         self._close_reason[pos.id] = reason
-        self.broker.close(pos.id)
+        if self.broker.close(pos.id):
+            return True
+        self._close_reason.pop(pos.id, None)
+        notify(f"⚠️ could not close {pos.id} ({reason}); broker-side SL/TP still active")
+        return False
 
     # ------------------------------------------------------------------ step
     def step(self) -> str:
@@ -128,6 +166,7 @@ class Engine:
         self.last_bar = bar_time
         if isinstance(self.broker, PaperBroker):
             # simulate broker-side SL/TP over the bar that just CLOSED (same as backtest)
+            self.broker.charge_financing(df.index[-2], df.index[-1])
             done = df.iloc[-2]
             self.broker.check_stops(float(done["high"]), float(done["low"]), float(done["open"]))
         self._sync_positions()
@@ -179,6 +218,7 @@ class Engine:
             self.rm.on_trade_opened()
             p = res.position
             self._open[p.id] = vars(p).copy()
+            self._save_ctl()
             self.journal.event("open", time=self._now_iso(), id=p.id, side=p.side, lots=p.lots,
                                price=round(p.entry, 2), stop=stop, take_profit=tp, reason=sig.reason,
                                equity=round(eq, 2))
@@ -198,7 +238,7 @@ class Engine:
         # time stop: same rule as the backtest (closed bars only, decided on the closed bar)
         close = float(row["close"])
         if self.p.max_hold_bars and pos.opened_at and df is not None and pos.entry:
-            held = int((df.index[:-1] >= pd.Timestamp(pos.opened_at)).sum())
+            held = int((df.index[:-1] > pd.Timestamp(pos.opened_at)).sum())
             if held >= self.p.max_hold_bars and pos.side * (close - pos.entry) < 0.5 * float(row["atr"]):
                 self._close(pos, f"time stop after {held} bars")
                 return
@@ -224,13 +264,20 @@ class Engine:
             notify("price feed recovered")
             self._stale_notified = False
 
-    def close_all(self, reason: str = "operator close-all") -> int:
-        n = 0
+    def close_all(self, reason: str = "operator close-all") -> tuple[int, int]:
+        """Returns (closed, failed)."""
+        ok = failed = 0
         for pos in self.broker.positions():
-            self._close(pos, reason)
-            n += 1
+            self._close_reason[pos.id] = reason
+            if self.broker.close(pos.id):
+                ok += 1
+            else:
+                failed += 1
+                self._close_reason.pop(pos.id, None)
         self._sync_positions()
-        return n
+        if failed:
+            notify(f"⚠️ close-all: {failed} position(s) could NOT be closed — check the broker")
+        return ok, failed
 
     def status(self) -> str:
         st = self.rm.state
@@ -265,10 +312,11 @@ class Engine:
                 if msg not in ("no new bar",):
                     log.info(msg)
             except Exception as exc:  # keep running; positions are protected broker-side
-                log.exception("step failed: %s", exc)
+                log.exception("step failed: %s", exc)    # formatter redacts secrets
                 if time.time() - self._last_err > 1800:
-                    notify(f"⚠️ step error: {exc}")
+                    notify(f"⚠️ step error: {type(exc).__name__}: {exc}")
                     self._last_err = time.time()
             self.stop_evt.wait(self.s.poll_seconds)
         self.rm.save()
+        self._save_ctl()
         notify("goldbot stopped (open positions keep their broker-side SL/TP)")

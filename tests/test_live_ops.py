@@ -76,7 +76,7 @@ def test_close_all_and_pause(tmp_path):
         if broker.positions():
             break
     assert broker.positions()
-    assert eng.close_all() == 1 and not broker.positions()
+    assert eng.close_all() == (1, 0) and not broker.positions()
     eng.paused = True
     msgs = []
     for j in range(i + 1, i + 300):
