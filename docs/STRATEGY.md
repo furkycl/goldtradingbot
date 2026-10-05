@@ -111,7 +111,20 @@ Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailes
 
 **Seçici (ensemble):** Her ailenin gerçekleşen R-katlarının üstel ağırlıklı ortalaması tutulur. Aynı barda birden fazla sinyal varsa en iyi skora sahip aile kazanır; eşiğin altına düşen aile "yedeğe" alınır ama kâğıt üstünde puanlanmaya devam eder, toparlarsa geri gelir. En iyi iki aile ters yönde ve skorları yakınsa işlem açılmaz. Skorlar yeniden başlatmada korunur.
 
-**Kural:** Hiçbir aile ve hiçbir ensemble, `scripts/compare_strategies.py` (aylık `research.yml`) rastgele girişe karşı p ≤ 0,05, 2× maliyette PF > 1,1 ve 4 walk-forward diliminin en az 3'ünde kâr göstermeden `params.yaml`'a girmez. İlk gerçek veri sonucu: `reports/strategies-*.md`.
+**Kural:** Hiçbir aile ve hiçbir ensemble, `scripts/compare_strategies.py` (aylık `research.yml`) rastgele girişe karşı p ≤ 0,05, 2× maliyette PF > 1,1 ve 4 walk-forward diliminin en az 3'ünde kâr göstermeden `params.yaml`'a girmez.
+
+**İlk gerçek veri sonucu (`reports/strategies-2026-10-05.md`, GC=F saatlik, 13.739 mum, mühürlü veri hariç):**
+
+| Yapılandırma | Getiri | Maks. düşüş | PF | p (rastgeleye karşı) | PF 2× maliyet | WF dilimleri | Sağlam |
+|---|---|---|---|---|---|---|---|
+| breakout (tek) | +%58 | %8,5 | 1,63 | 0,000 | 1,59 | 3/4 | ✅ |
+| squeeze (tek, ayarsız varsayılanlar) | +%36 | %5,2 | 1,51 | 0,007 | 1,45 | 3/4 | ✅ |
+| overnight / spike / meanrev (tek) | +%9 / +%2 / −%6 | — | ≤1,2 | 0,38–0,83 | <1,13 | — | ❌ |
+| **breakout + squeeze** | **+%66** | **%7,4** | **1,58** | **0,000** | **1,51** | **4/4** | ✅ |
+| hepsi (5 aile) | +%91 | %8,4 | 1,50 | 0,000 | 1,38 | 4/4 | ✅ (ama zayıf aileler gürültü katıyor) |
+| breakout + ATR'ye göre risk | +%83 | %10,3 | 1,75 | 0,000 | 1,64 | 3/4 | ✅ (getiri/düşüş oranı 6,9 → 8,0, düşüş artıyor) |
+
+**Karar (5 Ekim 2026):** `params.yaml` → `strategies: [breakout, squeeze]`. Sıkışma ailesinin parametreleri bu veride hiç ayarlanmadı ve tek başına anlamlı çıktı; ikili her walk-forward diliminde tek kırılımı geçti. Gece seansı, haber şoku ve ortalamaya dönüş aileleri tek başına anlamsız olduğu için **dışarıda** kaldı; literatürdeki "gece getirisi" ve "aşırı tepki" etkileri bu 2 yıllık veride maliyet sonrası görünmüyor. ATR'ye göre risk ölçekleme varsayılan olarak kapalı (düşüşü artırıyor; Harvey et al. ile uyumlu). Bu seçim araştırma verisinde yapıldı; asıl hüküm haftalık ileriye dönük test raporudur. Haftalık döngü, mühürlü veri kapısı altında bu seçimi geri alabilir veya genişletebilir.
 
 ## 7. 100$ ile dürüst matematik
 

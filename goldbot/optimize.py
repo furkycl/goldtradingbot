@@ -28,6 +28,11 @@ SEARCH_SPACE = {
     "adx_min": [0.0, 15.0, 18.0, 22.0, 25.0],
     "max_hold_bars": [0, 12, 24, 48],
     "daily_trend_days": [0, 20, 60, 120],
+    # families validated in reports/strategies-2026-10-05.md; the loop may revert
+    # to breakout-only or widen the ensemble, always under the sealed-holdout gate
+    "strategies": [["breakout"], ["breakout", "squeeze"], ["breakout", "squeeze", "meanrev"],
+                   ["breakout", "squeeze", "spike", "overnight", "meanrev"]],
+    "risk_vol_scaling": [False, True],
 }
 # Variant dimensions are added to SEARCH_SPACE only after scripts/compare_variants.py
 # shows they help out-of-sample under 1x AND 2x costs (see reports/variants-*.md).
