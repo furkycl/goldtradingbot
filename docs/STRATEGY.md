@@ -144,7 +144,7 @@ Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailes
 | Stop anında | Stop ve hedef emirle birlikte broker tarafında; stopsuz emir reddedilir (baştan beri) | `brokers/*` |
 | Giriş zamanlaması | `max_entry_stretch_atr`: fiyat hızlı EMA'dan X ATR'den uzaksa kovalamaz; güven skorunda seans ve uzama bileşenleri | `strategy.py::_filtered` |
 | Öğrenen bot | Aile seçici her işlemden sonra skor günceller; haftalık döngü parametreleri mühürlü veri kapısıyla yeniler | `ensemble.py`, `self_improve.py` |
-| Anında tepki | Haber her 60 sn, Telegram kanalları anlık; **giriş kararı saatlik mum kapanışında** — daha hızlı zaman dilimlerinde maliyet avantajı yiyor (§2) | `news/`, `engine.py` |
+| Anında tepki | Haber her 60 sn, Telegram kanalları anlık; **giriş kararı saatlik mum kapanışında**. Seviyeye dokunur dokunmaz giriş gerçek veride test edildi ve avantaj vermedi (aşağıda). Daha hızlı zaman dilimlerinde maliyet avantajı yiyor (§2) | `news/`, `engine.py` |
 
 **Gerçek veri hükmü (6 Ekim 2026, `reports/strategies-2026-10-06.md`, GC=F saatlik, 13.7k mum, mühürlü veri hariç):**
 
@@ -155,7 +155,7 @@ Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailes
 | Uzamış harekete girme (kovalamama) | **Zararlı.** 1,5 ATR: %64→%8; 2,5 ATR: %18. Kırılım stratejisi tanımı gereği uzamış harekete girer; filtre en iyi işlemleri eliyor. | `max_entry_stretch_atr` **kapalı**, arama uzayında yok. |
 | 2 pozisyon (kırılım+sıkışma) | Getiri %90 (vs %64) ama düşüş %13 (vs %7), getiri/düşüş 6,8 (vs 8,9), Sharpe 1,70 (vs 1,93). Aslında kaldıracı artırmak. | Varsayılan **1 pozisyon**. İsteyen `max_open_positions: 2` açabilir; bedeli düşüşte. |
 | 3 pozisyon, 5 aile | %110 getiri, %18 düşüş, PF 1,29. En kötü risk-ayarlı. | Hayır. |
-| Dokunur dokunmaz giriş (stop emri) | Test sırada (`entry_mode: touch`). | Sonuç `reports/strategies-*.md` içinde görünecek; "evet" derse broker tarafı kurulacak. |
+| Dokunur dokunmaz giriş (stop emri, `entry_mode: touch`) | **Fark yok, hatta biraz kötü.** Tek kırılım: getiri aynı (%50,6), düşüş %11,7→%9,1 ama PF 1,50→1,35 ve rastgeleye karşı **anlamsız** (p=0,13). Kırılım+sıkışma: %64→%68, PF 1,49→1,41, p=0,04. Daha çok işlem, daha yüksek maliyet duyarlılığı. | Kapanış teyidi kalıyor. "Anında tepki" bu stratejide avantaj değil; stoplar zaten anında ve broker tarafında. Broker tarafı pending-order altyapısı kurulmadı. |
 
 Çıkarılan ders: bu veride getiriyi artıran her şey (kademe, çoklu pozisyon) aslında daha fazla kaldıraç; **risk-ayarlı** getiriyi tek pozisyon ve sabit %1 risk veriyor. Merdiven (`risk_ladder`, `trading_cap`) ise bir strateji değil, senin sermaye planın; onu veriye sormaya gerek yok, uyguluyoruz.
 
