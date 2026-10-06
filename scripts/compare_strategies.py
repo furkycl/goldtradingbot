@@ -42,15 +42,21 @@ def configs(base):
     out["breakout + vol-scaled risk"] = replace(base, strategies=["breakout"], risk_vol_scaling=True)
     tiers = [[0.75, 1.5], [0.5, 1.0], [0.0, 0.5]]
     out["current + confluence tiers"] = replace(base, confluence_tiers=tiers)
-    out["current + no-chase (1.5 ATR)"] = replace(base, max_entry_stretch_atr=1.5)
+    # 2026-10-06 result: no-chase filters destroy the breakout edge (p>0.1); upsizing
+    # the top tier x1.5 raised drawdown more than return. Targeted follow-ups:
+    out["current + tiers downsize-only (1/1/0.5)"] = replace(base, confluence_tiers=[[0.5, 1.0], [0.0, 0.5]])
+    out["current + tiers mild (1.25/1/0.5)"] = replace(base, confluence_tiers=[[0.75, 1.25], [0.5, 1.0], [0.0, 0.5]])
     out["current + no-chase (2.5 ATR)"] = replace(base, max_entry_stretch_atr=2.5)
-    out["current + tiers + no-chase 2.5"] = replace(base, confluence_tiers=tiers, max_entry_stretch_atr=2.5)
     return out
 
 
 def multi_position_configs(base):
-    """Same strategies, 1 vs 3 concurrent positions (total open risk capped)."""
-    return {"1 position (current)": 1, "3 positions, 3% total risk": 3}
+    """label -> (max_open_positions, max_total_risk_pct, strategies)."""
+    bs = ["breakout", "squeeze"]
+    return {"1 position (current)": (1, 2.0, bs),
+            "2 positions b+s, 2% total": (2, 2.0, bs),
+            "2 positions b+s, 3% total": (2, 3.0, bs),
+            "3 positions all families, 3% total": (3, 3.0, ALL)}
 
 
 def _cost(s, m):
@@ -144,12 +150,15 @@ def main() -> int:
     start = df.index[warmup_bars(pc) + 50]
     buckets = _confluence_buckets(df, settings, replace(base, strategies=["breakout", "squeeze"]), tiers, start)
     multi = {}
-    for label, n in multi_position_configs(base).items():
-        sm = replace(settings); sm.risk = replace(settings.risk, max_open_positions=n, max_total_risk_pct=3.0 if n > 1 else 2.0,
+    for label, (n, total, strats) in multi_position_configs(base).items():
+        sm = replace(settings); sm.risk = replace(settings.risk, max_open_positions=n, max_total_risk_pct=total,
                                                   max_trades_per_day=10)
-        pm = replace(base, strategies=["breakout", "squeeze", "meanrev", "overnight", "spike"]) if n > 1 else base
+        pm = replace(base, strategies=strats)
         st = run_backtest(df, sm, pm, trade_from=df.index[warmup_bars(pm) + 50]).stats
+        wf = evaluate(df, sm, pm)
         multi[label] = {k: st[k] for k in ("return_pct", "max_drawdown_pct", "trades", "profit_factor", "sharpe")}
+        multi[label]["calmar"] = round(st["return_pct"] / max(st["max_drawdown_pct"], 1), 2)
+        multi[label]["wf_folds_return"] = [f["return_pct"] for f in wf["folds"]]
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     out = ROOT / "reports"; out.mkdir(exist_ok=True)
@@ -170,10 +179,11 @@ def main() -> int:
           "| Score bucket | Trades | Avg R | Win % | Sum R |", "|---|---|---|---|---|"]
     for k, v in buckets.items():
         L.append(f"| {k} | {v['n']} | {v['avg_r']} | {v['win_rate']} | {v['sum_r']} |")
-    L += ["", "## 1 vs 3 concurrent positions (all families, total open risk capped)", "",
-          "| Config | Return % | Max DD % | Trades | PF | Sharpe |", "|---|---|---|---|---|---|"]
+    L += ["", "## Concurrent positions (one per family, no hedging, total open risk capped)", "",
+          "| Config | Return % | Max DD % | Return/DD | Trades | PF | Sharpe | WF fold returns % |", "|---|---|---|---|---|---|---|---|"]
     for k, v in multi.items():
-        L.append(f"| {k} | {v['return_pct']} | {v['max_drawdown_pct']} | {v['trades']} | {v['profit_factor']} | {v['sharpe']} |")
+        L.append(f"| {k} | {v['return_pct']} | {v['max_drawdown_pct']} | {v['calmar']} | {v['trades']} | {v['profit_factor']} | "
+                 f"{v['sharpe']} | {v['wf_folds_return']} |")
     L += ["", "## Per-family attribution inside ensembles", ""]
     for r in rows:
         if len(r["strategies"]) > 1:
