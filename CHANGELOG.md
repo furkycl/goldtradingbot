@@ -1,5 +1,14 @@
 # Değişiklik günlüğü
 
+## 0.4.0 — 6 Ekim 2026
+- Çoklu pozisyon modu (aile başına bir, ters yön yasak, toplam açık risk tavanı); motor/backtest eşitliği testli.
+- Güven skoru (trend, günlük trend, haber yönü, seans, oynaklık, uzama, aile uyumu): her bildirimde görünür; kademeli lot büyüklüğü isteğe bağlı.
+- Sermaye merdiveni: bakiyeye göre risk (`risk_ladder`, kod tavanı %3) ve işlem tavanı (`trading_cap`) + Telegram "çekirdeğe taşı" uyarısı.
+- `doctor` komutu: neyin ayarlı, neyin eksik olduğunu listeler.
+- MT5: emir sonrası stop sunucuda doğrulanır; koyulamazsa pozisyon anında kapatılır.
+- Gerçek veri hükümleri (STRATEGY.md §8): kademeli risk, kovalamama filtresi, 2–3 pozisyon ve dokunuşla giriş **risk-ayarlı getiriyi iyileştirmedi** → varsayılanlar değişmedi (1 pozisyon, %1 risk, kapanış teyidi).
+- Workflow yayınlama tek betikte, adım adım hata annotation'ı.
+
 ## 0.3.0 — 5 Ekim 2026
 - Strateji kütüphanesi: kırılım, sıkışma, gece seansı, haber şoku, ortalamaya dönüş; ortak çıkış ve risk kuralları.
 - Performansa göre seçen ensemble (yedeğe alma, yön çatışmasında bekleme, kalıcı skor).
