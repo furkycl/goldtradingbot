@@ -130,8 +130,27 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
         return sum(t.initial_risk * t.lots * settings.contract_size for t in positions)
 
     secs = np.diff(idx.asi8) / 1e9 if len(idx) > 1 else np.array([])
+    touch = None   # (side, level, stop_dist) valid for the next bar only
+    dc_up = data["dc_up"].to_numpy() if "dc_up" in data else None
+    dc_low = data["dc_low"].to_numpy() if "dc_low" in data else None
     for i in range(len(data)):
         ts = idx[i]
+        # 0b) touch-entry: fill the instant the bar trades through the level
+        if touch is not None and len(positions) < max_pos:
+            side, level, sd = touch
+            hit = h[i] >= level if side > 0 else lo[i] <= level
+            if hit:
+                raw = max(o[i], level) if side > 0 else min(o[i], level)
+                entry = raw + side * half_spread
+                stop = entry - side * sd
+                tp = entry + side * sd * params.take_profit_r
+                lots = rm.size_position(cash, entry, stop, risk_scale(params, median_atr, atr_v[i]))
+                if lots > 0:
+                    positions.append(Trade(side, lots, ts, entry, stop, tp, sd, entry_bar=i, strategy="breakout"))
+                    rm.on_trade_opened()
+                else:
+                    skipped += 1
+            touch = None
         # 0) financing on positions held from the previous bar
         if positions and fin_rate and i > 0:
             for t in positions:
@@ -204,6 +223,18 @@ def run_backtest(df: pd.DataFrame, settings: Settings, params: StrategyParams,
                     chosen = select_multi(candidates_at(data.iloc[i], params, sentiment_fn(ts) if sentiment_fn else 0.0),
                                           positions, selector, max_pos - len(positions))
                 pending = [s for s in chosen if not (settings.long_only and s.side < 0)]
+                if params.entry_mode == "touch" and dc_up is not None and not pending and len(positions) < max_pos \
+                        and "breakout" in families(params) and not np.isnan(atr_v[i]):
+                    row = data.iloc[i]
+                    trending = row["adx"] >= params.adx_min
+                    up = c[i] <= dc_up[i] and row["ema_fast"] > row["ema_slow"]
+                    dn = c[i] >= dc_low[i] and row["ema_fast"] < row["ema_slow"]
+                    nxt_up = max(h[max(0, i - params.breakout_lookback + 1): i + 1])
+                    nxt_lo = min(lo[max(0, i - params.breakout_lookback + 1): i + 1])
+                    if trending and up and not (settings.long_only and False):
+                        touch = (1, nxt_up, params.atr_stop_mult * atr_v[i])
+                    elif trending and dn and not settings.long_only:
+                        touch = (-1, nxt_lo, params.atr_stop_mult * atr_v[i])
 
     for pos in positions:
         cash += close_pos(pos, c[-1], idx[-1], "end_of_data")

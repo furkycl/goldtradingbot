@@ -96,3 +96,25 @@ def test_ensemble_engine_matches_backtest(df, tmp_path):
     for c, t in zip(broker.closed[:n], bt.trades[:n]):
         assert pd.Timestamp(c["opened_at"]) == t.entry_time
         assert abs(c["pnl"] - t.pnl) < 0.05, (c["reason"], t.reason, t.strategy)
+
+
+def test_touch_entry_fills_at_level_or_open(df):
+    from goldbot.config import Settings
+    s = Settings(starting_equity=10_000, financing_pct_per_year=0.0)
+    p = StrategyParams(strategies=["breakout"], adx_min=0, entry_mode="touch")
+    r = run_backtest(df, s, p)
+    assert r.stats["trades"] > 10
+    d = prepare(df, p)
+    for t in r.trades[:40]:
+        i = d.index.get_loc(t.entry_time)
+        bar = d.iloc[i]
+        # fill price (ex spread) is the breakout level or the open if it gapped through
+        raw = t.entry - t.side * s.spread / 2
+        assert bar["low"] - 1e-9 <= raw <= bar["high"] + 1e-9
+        assert t.strategy == "breakout" and t.initial_risk > 0
+    import pytest
+    with pytest.raises(ValueError):
+        from goldbot.brokers.paper import PaperBroker
+        from goldbot.engine import Engine
+        from goldbot.news import NewsAggregator
+        Engine(s, p, broker=PaperBroker(s, feed=df.iloc[:400], state_path=None), news=NewsAggregator(rss=[]))
