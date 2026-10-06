@@ -19,6 +19,8 @@ GC=F 1h, 13688 bars up to the sealed holdout (2026-10-05), $10k, real costs. Ran
 | current + tiers downsize-only (1/1/0.5) | 57.23 | 8.41 | 421 | 1.47 | 49.2 | 6.45 | 0.0 | 54.48 | 1.47 | 0.8272 | [-0.83, 8.89, -0.72, 6.16] | 4548.95 | 1173.57 | — |
 | current + tiers mild (1.25/1/0.5) | 64.88 | 10.69 | 422 | 1.49 | 49.5 | 7.23 | 0.0 | 57.08 | 1.43 | 1.036 | [-1.17, 11.01, 2.08, 5.42] | 4737.16 | 1751.18 | ✅ |
 | current + no-chase (2.5 ATR) | 18.32 | 7.38 | 265 | 1.26 | 45.7 | -2.0 | 0.06 | 14.88 | 1.21 | 0.4164 | [-0.01, 1.71, -1.29, 3.86] | 1625.14 | 206.73 | — |
+| breakout touch-entry | 50.62 | 9.11 | 467 | 1.35 | 44.5 | 27.79 | 0.133 | 47.8 | 1.34 | 0.9068 | [1.46, 11.02, -1.25, 4.77] | 4226.69 | 835.61 | — |
+| current + touch-entry | 68.14 | 7.43 | 521 | 1.41 | 45.9 | 22.87 | 0.04 | 57.3 | 1.36 | 1.8647 | [-2.19, 8.16, 4.32, 6.88] | 5646.79 | 1167.17 | ✅ |
 
 ## Confluence score vs realised R (breakout+squeeze, equal sizing)
 
@@ -49,3 +51,4 @@ Does a higher quality score predict better trades? (If not, tiers only add varia
 - **current + tiers downsize-only (1/1/0.5)**: breakout: 261 trades, $2895.85, win 49.0%, squeeze: 160 trades, $2826.67, win 49.4%
 - **current + tiers mild (1.25/1/0.5)**: breakout: 260 trades, $3175.67, win 49.2%, squeeze: 162 trades, $3312.67, win 50.0%
 - **current + no-chase (2.5 ATR)**: breakout: 137 trades, $-310.12, win 43.1%, squeeze: 128 trades, $2141.99, win 48.4%
+- **current + touch-entry**: breakout: 417 trades, $5320.16, win 45.8%, squeeze: 104 trades, $1493.79, win 46.2%
