@@ -5,12 +5,12 @@
 # verir ve sadece 1.000$'ı riske etmeye devam eder.
 #
 # Risk basamakları (kod tavanı %3; Monte Carlo'ya göre %5+ iflas bölgesi):
-#   0–500$     : işlem başına %2  (güven skoru yüksek işlemlerde ×1,5 = %3)
+#   0–500$     : işlem başına %2
 #   500–1.000$ : %1,5
 #   1.000$+    : %1  (ve sadece 1.000$'lık pot riske edilir)
-# Güven skoru (haber yönü + trend + seans + oynaklık + aile uyumu) düşükse
-# risk ×0,5'e iner. "Garanti işlem" yoktur; bu, hizalanmış işlemlere daha
-# çok, hizalanmamışlara daha az risk vermektir.
+# Güven skoru (haber yönü + trend + seans + oynaklık + aile uyumu) her işlem
+# bildiriminde görünür, ama lot büyüklüğünü DEĞİŞTİRMEZ: gerçek veride kademeli
+# risk, getiri/düşüşü kötüleştirdi (docs/STRATEGY.md §8). "Garanti işlem" yoktur.
 # UYARI: 100$ ile standart 0,01 lot hesapta bot neredeyse hiç işlem açamaz
 # (docs/STRATEGY.md §7). Bu profil 0,001 lot sunan mikro hesap içindir.
 # =======================================================================
@@ -37,8 +37,8 @@ risk:
   max_daily_loss_pct: 5.0
   max_drawdown_pct: 25.0
   max_leverage: 10.0
-  max_open_positions: 2
-  max_total_risk_pct: 3.0
+  max_open_positions: 1    # 2 pozisyon gerçek veride getiri/düşüşü kötüleştirdi (STRATEGY.md §8)
+  max_total_risk_pct: 2.0
   max_trades_per_day: 4
   max_cost_in_r: 0.05
 
