@@ -138,7 +138,7 @@ Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailes
 | İstek | Kodda | Nerede |
 |---|---|---|
 | Başta düşük bakiyede daha yüksek risk, sonra düşür | `risk.risk_ladder: [[0, 2.0], [500, 1.5], [1000, 1.0]]` (kod tavanı %3) | `config/profiles/ladder_100_to_1000.yaml` |
-| "Garanti" işlemlerde (haber + düzgün grafik) daha yüksek kaldıraç | **Güven skoru** 0–1: EMA trendi, 20 günlük trend, haber yönü, Londra/NY seansı, oynaklık rejimi, aşırı uzama, aile uyumu. Kademeler: ≥0,75 → risk ×1,5; 0,5–0,75 → ×1; <0,5 → ×0,5 | `confluence_tiers` (params), `goldbot/strategy.py::confluence` |
+| "Garanti" işlemlerde (haber + düzgün grafik) daha yüksek kaldıraç | **Güven skoru** 0–1: EMA trendi, 20 günlük trend, haber yönü, Londra/NY seansı, oynaklık rejimi, aşırı uzama, aile uyumu. Kademeler mümkün ama gerçek veride işe yaramadı (aşağıda) | `confluence_tiers` (params), `goldbot/strategy.py::confluence` |
 | 1.000$'a ulaşınca üstünü spotta tut, 1.000 aynı kaldıraçla devam | `risk.trading_cap: 1000` → bot sadece 1.000$'ı riske eder; fazlası için Telegram'dan "çekirdeğe taşı" uyarısı (`sweep` kaydı) | `risk.py::trading_equity`, `engine.py::_ladder_check` |
 | Birden fazla işlem, kontrollü | `max_open_positions: 2–3`: aile başına bir pozisyon, ters yön yasak, toplam açık risk ≤ `max_total_risk_pct` | `backtest.py::select_multi`, motor aynı |
 | Stop anında | Stop ve hedef emirle birlikte broker tarafında; stopsuz emir reddedilir (baştan beri) | `brokers/*` |
@@ -146,7 +146,18 @@ Tek bir kırılım mantığına bağlı kalmamak için beş farklı giriş ailes
 | Öğrenen bot | Aile seçici her işlemden sonra skor günceller; haftalık döngü parametreleri mühürlü veri kapısıyla yeniler | `ensemble.py`, `self_improve.py` |
 | Anında tepki | Haber her 60 sn, Telegram kanalları anlık; **giriş kararı saatlik mum kapanışında** — daha hızlı zaman dilimlerinde maliyet avantajı yiyor (§2) | `news/`, `engine.py` |
 
-**Neyin kanıtlı, neyin deneme olduğu:** Çoklu pozisyon ve merdiven, risk kuralı; güven skoru ve kovalamama filtresi ise **hipotez**. Aylık `compare_strategies.py` artık şunu raporluyor: yüksek skorlu işlemler gerçekten daha çok R kazanıyor mu (kova analizi), kovalamama filtresi getiriyi artırıyor mu, 1 vs 3 pozisyon ne fark ediyor. Sonuçlar `reports/strategies-*.md` içinde; varsayılan `params.yaml` bu özellikleri ancak gerçek veri "evet" derse açar.
+**Gerçek veri hükmü (6 Ekim 2026, `reports/strategies-2026-10-06.md`, GC=F saatlik, 13.7k mum, mühürlü veri hariç):**
+
+| Hipotez | Sonuç | Karar |
+|---|---|---|
+| Yüksek güven skorlu işlemler daha çok kazanır | **Kısmen doğru.** Skor <0,5: ort. 0,03R, kazanma %42. Skor ≥0,75: 0,16R, %54. Ayrım esas olarak en düşük kovada. | Skor **bilgi** olarak kalıyor (Telegram bildiriminde görünüyor). |
+| Yüksek skorda lotu büyüt (×1,5) | **Hayır.** Getiri %64→%70 ama düşüş %7→%13; getiri/düşüş 8,9→5,5. Yumuşak (×1,25) ve sadece-küçült (×0,5 alt kova) sürümler de risk-ayarlı iyileşme vermedi (6,1 ve 6,8). | `confluence_tiers` varsayılan **kapalı**. "Garanti işlemde daha büyük gir" fikri bu veride para kazandırmıyor; sadece dalgalanmayı artırıyor. |
+| Uzamış harekete girme (kovalamama) | **Zararlı.** 1,5 ATR: %64→%8; 2,5 ATR: %18. Kırılım stratejisi tanımı gereği uzamış harekete girer; filtre en iyi işlemleri eliyor. | `max_entry_stretch_atr` **kapalı**, arama uzayında yok. |
+| 2 pozisyon (kırılım+sıkışma) | Getiri %90 (vs %64) ama düşüş %13 (vs %7), getiri/düşüş 6,8 (vs 8,9), Sharpe 1,70 (vs 1,93). Aslında kaldıracı artırmak. | Varsayılan **1 pozisyon**. İsteyen `max_open_positions: 2` açabilir; bedeli düşüşte. |
+| 3 pozisyon, 5 aile | %110 getiri, %18 düşüş, PF 1,29. En kötü risk-ayarlı. | Hayır. |
+| Dokunur dokunmaz giriş (stop emri) | Test sırada (`entry_mode: touch`). | Sonuç `reports/strategies-*.md` içinde görünecek; "evet" derse broker tarafı kurulacak. |
+
+Çıkarılan ders: bu veride getiriyi artıran her şey (kademe, çoklu pozisyon) aslında daha fazla kaldıraç; **risk-ayarlı** getiriyi tek pozisyon ve sabit %1 risk veriyor. Merdiven (`risk_ladder`, `trading_cap`) ise bir strateji değil, senin sermaye planın; onu veriye sormaya gerek yok, uyguluyoruz.
 
 ## 9. Döngü şimdi ne yapıyor?
 

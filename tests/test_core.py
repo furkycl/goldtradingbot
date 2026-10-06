@@ -348,4 +348,4 @@ def test_ladder_profile_loads():
     from goldbot.config import ROOT
     s = load_settings(ROOT / "config" / "profiles" / "ladder_100_to_1000.yaml")
     assert s.risk.trading_cap == 1000 and s.risk.risk_ladder[0] == [0, 2.0]
-    assert s.mode == "paper" and s.risk.max_open_positions == 2
+    assert s.mode == "paper" and s.risk.max_open_positions == 1   # 2 tested 2026-10-06: worse return/DD

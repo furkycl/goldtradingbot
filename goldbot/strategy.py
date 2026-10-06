@@ -118,13 +118,16 @@ def candidates_at(row: pd.Series, p: StrategyParams, news_sentiment: float = 0.0
         sig = REGISTRY[name].signal(row, p)
         sig.strategy = sig.strategy or name
         out.append(_filtered(sig, row, p, news_sentiment))
-    if p.confluence_tiers:
-        for sig in out:
-            if sig.side:
-                agree = sum(1 for o in out if o is not sig and o.side == sig.side)
-                score, why = confluence(row, sig.side, news_sentiment, agree)
+    # the confluence score is always reported (it shows up in trade notifications);
+    # it changes position size ONLY when confluence_tiers is set (off by default:
+    # real-data test 2026-10-06 found tiered sizing hurts return/drawdown)
+    for sig in out:
+        if sig.side and "ema_fast" in row.index:
+            agree = sum(1 for o in out if o is not sig and o.side == sig.side)
+            score, why = confluence(row, sig.side, news_sentiment, agree)
+            sig.reason += f" [conf {score:.2f}: {why}]"
+            if p.confluence_tiers:
                 sig.risk_mult = tier_multiplier(score, p.confluence_tiers)
-                sig.reason += f" [conf {score:.2f}: {why}]"
     return out
 
 
