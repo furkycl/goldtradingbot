@@ -102,11 +102,47 @@ class MT5Broker(Broker):
         }
         r = self.mt5.order_send(req)
         if r is None or r.retcode != self.mt5.TRADE_RETCODE_DONE:
-            return OrderResult(False, message=f"order failed: {getattr(r, 'comment', self.mt5.last_error())}")
-        self._risk[str(r.order)] = abs(r.price - stop)
+            # Some ECN brokers reject SL/TP inside a market order ("invalid stops"):
+            # send the order without them, then attach the stop IMMEDIATELY.
+            if r is not None and r.retcode == getattr(self.mt5, "TRADE_RETCODE_INVALID_STOPS", 10016):
+                req2 = {**req, "sl": 0.0, "tp": 0.0}
+                r = self.mt5.order_send(req2)
+            if r is None or r.retcode != self.mt5.TRADE_RETCODE_DONE:
+                return OrderResult(False, message=f"order failed: {getattr(r, 'comment', self.mt5.last_error())}")
+        ticket = str(r.order)
+        # --- verify the stop really sits on the server; a position without a stop is never kept
+        ok = self._verify_stop(ticket, stop, take_profit)
+        if not ok:
+            self._emergency_close(ticket, side, lots)
+            return OrderResult(False, message="broker did not accept the stop loss; position closed immediately")
+        self._risk[ticket] = abs(r.price - stop)
         self._save_risk()
-        return OrderResult(True, Position(str(r.order), side, lots, r.price, stop, take_profit,
+        return OrderResult(True, Position(ticket, side, lots, r.price, stop, take_profit,
                                           pd.Timestamp.now(tz="UTC").isoformat(), abs(r.price - stop)))
+
+    def _verify_stop(self, ticket: str, stop: float, take_profit: float, tries: int = 3) -> bool:
+        import time as _t
+        for _ in range(tries):
+            pos = self.mt5.positions_get(ticket=int(ticket))
+            p = pos[0] if pos else None
+            if p is not None and p.sl and abs(p.sl - stop) < 1e-6 * max(1.0, stop) + 0.5:
+                return True
+            if p is not None:
+                self.mt5.order_send({"action": self.mt5.TRADE_ACTION_SLTP, "position": int(ticket),
+                                     "symbol": self.symbol, "sl": stop, "tp": take_profit})
+            _t.sleep(0.5)
+        pos = self.mt5.positions_get(ticket=int(ticket))
+        return bool(pos) and bool(pos[0].sl)
+
+    def _emergency_close(self, ticket: str, side: int, lots: float) -> None:
+        bid, ask = self.price()
+        self.mt5.order_send({
+            "action": self.mt5.TRADE_ACTION_DEAL, "symbol": self.symbol, "volume": lots,
+            "type": self.mt5.ORDER_TYPE_SELL if side > 0 else self.mt5.ORDER_TYPE_BUY,
+            "position": int(ticket), "price": bid if side > 0 else ask,
+            "deviation": 50, "magic": self.magic, "comment": "goldbot no-stop close",
+            "type_filling": self.mt5.ORDER_FILLING_IOC,
+        })
 
     def modify_stop(self, position_id: str, new_stop: float) -> bool:
         pos = next((p for p in self.positions() if p.id == position_id), None)

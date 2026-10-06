@@ -8,6 +8,7 @@
   status [--mode M]                             forward-test results vs go-live checklist
   report [--mode M]                             HTML report (equity curve, trades)
   core                                          unlevered core-holding signal (daily trend)
+  doctor                                        checklist of what is configured / what you must enter
   telegram-login                                one-time login for reading Telegram channels
   health                                        liveness check (used by Docker)
   reset-halt                                    clear the kill switch after a human review (bot stopped)
@@ -47,6 +48,7 @@ def main(argv=None) -> None:
     sp = sub.add_parser("report", help="write state/<mode>/report.html")
     sp.add_argument("--mode", choices=["paper", "demo", "live"], default="paper")
     sub.add_parser("core", help="unlevered core-holding signal (daily gold trend)")
+    sub.add_parser("doctor", help="checklist: what is configured, what YOU still need to enter")
     sub.add_parser("telegram-login", help="one-time interactive login for reading Telegram channels")
     sub.add_parser("health", help="exit 0 if the bot is alive (log fresh) or the market is closed")
     sub.add_parser("reset-halt", help="clear a drawdown/daily halt after reviewing what happened")
@@ -125,11 +127,33 @@ def main(argv=None) -> None:
         from . import data as data_mod
         from .core import core_signal
         print(json.dumps(core_signal(data_mod.load_yfinance("GC=F", "5y", "1d")["close"]), indent=2))
+    elif args.cmd == "doctor":
+        from .doctor import render, run
+        print(render(run()))
+    elif args.cmd == "telegram-login":
+        from .news.telegram_listener import interactive_login
+        interactive_login(settings.news.get("telegram") or {})
+    elif args.cmd == "health":
+        import sys
+        import time
+        from datetime import datetime, timezone
+
+        from .config import ROOT
+        from .engine import market_open, mode_name
+        log_file = ROOT / "state" / mode_name(settings) / "goldbot.log"
+        fresh = log_file.exists() and time.time() - log_file.stat().st_mtime < 7200
+        sys.exit(0 if fresh or not market_open(datetime.now(timezone.utc)) else 1)
     elif args.cmd == "reset-halt":
         from .brokers import make_broker
         from .config import ROOT
         from .engine import mode_name
         from .risk import RiskManager
+        from .safety import InstanceLock
+        lock = InstanceLock(ROOT / "state" / mode_name(settings) / "goldbot.lock")
+        if not lock.acquire():
+            raise SystemExit("the bot is running: stop it first, then reset-halt, then start it again "
+                             "(otherwise the running bot would immediately re-write the halt)")
+        lock.release()
         broker = make_broker(settings)
         rm = RiskManager(settings.risk, settings.contract_size, settings.min_lot, settings.lot_step, broker.equity())
         rm.attach(ROOT / "state" / mode_name(settings) / "risk.json")
