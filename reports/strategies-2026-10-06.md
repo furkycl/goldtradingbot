@@ -16,9 +16,9 @@ GC=F 1h, 13688 bars up to the sealed holdout (2026-10-05), $10k, real costs. Ran
 | ensemble: all + vol-scaled risk | 63.49 | 11.77 | 537 | 1.31 | 49.9 | 15.29 | 0.047 | 46.47 | 1.24 | 1.1968 | [3.74, 12.09, 3.43, 4.24] | 5774.62 | 574.14 | ✅ |
 | breakout + vol-scaled risk | 57.3 | 13.01 | 327 | 1.5 | 49.8 | 8.2 | 0.013 | 41.4 | 1.38 | 2.6603 | [5.69, 16.45, -0.43, 7.34] | 5187.63 | 541.9 | ✅ |
 | current + confluence tiers | 69.94 | 12.8 | 422 | 1.47 | 49.5 | 4.71 | 0.0 | 65.71 | 1.45 | 1.0427 | [-0.81, 10.75, 1.56, 6.14] | 5169.71 | 1824.5 | ✅ |
-| current + no-chase (1.5 ATR) | 7.54 | 6.97 | 148 | 1.22 | 48.0 | 1.14 | 0.247 | 6.52 | 1.19 | -0.095 | [-3.63, -0.56, -0.25, 2.91] | 1011.43 | -257.34 | — |
-| current + no-chase (2.5 ATR) | 18.32 | 7.38 | 265 | 1.26 | 45.7 | 1.34 | 0.127 | 14.88 | 1.21 | 0.4164 | [-0.01, 1.71, -1.29, 3.86] | 1625.14 | 206.73 | — |
-| current + tiers + no-chase 2.5 | 38.66 | 9.75 | 257 | 1.46 | 45.9 | 3.21 | 0.0 | 37.39 | 1.45 | 0.8196 | [0.26, 4.0, 2.54, 3.8] | 2738.29 | 1127.62 | ✅ |
+| current + tiers downsize-only (1/1/0.5) | 57.23 | 8.41 | 421 | 1.47 | 49.2 | 6.45 | 0.0 | 54.48 | 1.47 | 0.8272 | [-0.83, 8.89, -0.72, 6.16] | 4548.95 | 1173.57 | — |
+| current + tiers mild (1.25/1/0.5) | 64.88 | 10.69 | 422 | 1.49 | 49.5 | 7.23 | 0.0 | 57.08 | 1.43 | 1.036 | [-1.17, 11.01, 2.08, 5.42] | 4737.16 | 1751.18 | ✅ |
+| current + no-chase (2.5 ATR) | 18.32 | 7.38 | 265 | 1.26 | 45.7 | -2.0 | 0.06 | 14.88 | 1.21 | 0.4164 | [-0.01, 1.71, -1.29, 3.86] | 1625.14 | 206.73 | — |
 
 ## Confluence score vs realised R (breakout+squeeze, equal sizing)
 
@@ -30,12 +30,14 @@ Does a higher quality score predict better trades? (If not, tiers only add varia
 | 0.5–0.75 | 234 | 0.156 | 48.3 | 36.5 |
 | <0.5 | 59 | 0.032 | 42.4 | 1.9 |
 
-## 1 vs 3 concurrent positions (all families, total open risk capped)
+## Concurrent positions (one per family, no hedging, total open risk capped)
 
-| Config | Return % | Max DD % | Trades | PF | Sharpe |
-|---|---|---|---|---|---|
-| 1 position (current) | 63.57 | 7.14 | 433 | 1.49 | 1.93 |
-| 3 positions, 3% total risk | 110.41 | 18.15 | 945 | 1.29 | 1.65 |
+| Config | Return % | Max DD % | Return/DD | Trades | PF | Sharpe | WF fold returns % |
+|---|---|---|---|---|---|---|---|
+| 1 position (current) | 63.57 | 7.14 | 8.9 | 433 | 1.49 | 1.93 | [-1.31, 7.58, 2.51, 9.04] |
+| 2 positions b+s, 2% total | 89.71 | 13.13 | 6.83 | 624 | 1.4 | 1.7 | [-1.16, 12.06, 0.03, 5.7] |
+| 2 positions b+s, 3% total | 89.71 | 13.13 | 6.83 | 624 | 1.4 | 1.7 | [-1.16, 12.06, 0.03, 5.7] |
+| 3 positions all families, 3% total | 110.41 | 18.15 | 6.08 | 945 | 1.29 | 1.65 | [-5.12, 11.21, 0.56, 3.66] |
 
 ## Per-family attribution inside ensembles
 
@@ -44,6 +46,6 @@ Does a higher quality score predict better trades? (If not, tiers only add varia
 - **ensemble: breakout+meanrev**: breakout: 342 trades, $4310.06, win 48.8%, meanrev: 87 trades, $-303.58, win 55.2%
 - **ensemble: all + vol-scaled risk**: breakout: 223 trades, $1401.5, win 47.5%, spike: 57 trades, $414.34, win 47.4%, squeeze: 140 trades, $4474.39, win 49.3%, overnight: 84 trades, $86.71, win 54.8%, meanrev: 33 trades, $-28.18, win 60.6%
 - **current + confluence tiers**: breakout: 260 trades, $3282.43, win 49.2%, squeeze: 162 trades, $3711.79, win 50.0%
-- **current + no-chase (1.5 ATR)**: breakout: 79 trades, $-518.85, win 44.3%, squeeze: 69 trades, $1272.94, win 52.2%
+- **current + tiers downsize-only (1/1/0.5)**: breakout: 261 trades, $2895.85, win 49.0%, squeeze: 160 trades, $2826.67, win 49.4%
+- **current + tiers mild (1.25/1/0.5)**: breakout: 260 trades, $3175.67, win 49.2%, squeeze: 162 trades, $3312.67, win 50.0%
 - **current + no-chase (2.5 ATR)**: breakout: 137 trades, $-310.12, win 43.1%, squeeze: 128 trades, $2141.99, win 48.4%
-- **current + tiers + no-chase 2.5**: breakout: 136 trades, $696.86, win 42.6%, squeeze: 121 trades, $3169.05, win 49.6%
