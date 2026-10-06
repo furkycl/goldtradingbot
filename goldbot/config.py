@@ -105,6 +105,8 @@ class StrategyParams:
     # score to a risk multiplier: [[min_score, mult], ...] highest first. [] = off.
     confluence_tiers: list = field(default_factory=list)
     max_entry_stretch_atr: float = 0.0   # skip entries more than X ATR from the fast EMA (0 = off)
+    entry_mode: str = "close"            # close = confirm on bar close (default); touch = breakout family
+                                         # enters the instant price touches the Donchian level (research)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "StrategyParams":

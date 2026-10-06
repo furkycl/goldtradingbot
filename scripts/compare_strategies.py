@@ -47,6 +47,9 @@ def configs(base):
     out["current + tiers downsize-only (1/1/0.5)"] = replace(base, confluence_tiers=[[0.5, 1.0], [0.0, 0.5]])
     out["current + tiers mild (1.25/1/0.5)"] = replace(base, confluence_tiers=[[0.75, 1.25], [0.5, 1.0], [0.0, 0.5]])
     out["current + no-chase (2.5 ATR)"] = replace(base, max_entry_stretch_atr=2.5)
+    # instant reaction: breakout enters on the touch of the Donchian level (stop order) instead of the close
+    out["breakout touch-entry"] = replace(base, strategies=["breakout"], entry_mode="touch")
+    out["current + touch-entry"] = replace(base, entry_mode="touch")
     return out
 
 

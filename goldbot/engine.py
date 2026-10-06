@@ -88,6 +88,9 @@ class Engine:
         self.paused = bool(saved.get("paused", False))
         self._sweep_level = int(saved.get("sweep_level", 0))
         self._open: dict[str, dict] = saved.get("open", {})
+        if params.entry_mode != "close":
+            raise ValueError("entry_mode=touch is a research-only backtest variant for now (needs pending-order "
+                             "support in the brokers); set entry_mode: close for live/paper runs")
         self.selector = Selector(families(params), params.ensemble_lookback, params.ensemble_min_score)
         self.selector.load(saved.get("selector"))
         self._close_reason: dict[str, str] = {}
