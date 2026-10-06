@@ -41,6 +41,7 @@ Docker, Windows + MT5 demo ve Linux servis kurulumu: **[docs/DEPLOY.md](docs/DEP
 ## Komutlar
 
 ```bash
+python -m goldbot doctor                 # neyin ayarlı, neyin eksik olduğunu listeler (senin gireceklerin)
 python -m goldbot run                    # paper / demo / live (settings.yaml > mode)
 python -m goldbot status                 # ileriye dönük test ve canlıya geçiş kontrol listesi
 python -m goldbot report --mode paper    # state/paper/report.html

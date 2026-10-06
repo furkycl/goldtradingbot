@@ -11,6 +11,8 @@ Hangi kurulumu seçeceğin modu ve brokeri belirler:
 
 ## Ortak ilk adımlar
 
+`python -m goldbot doctor` komutu her adımdan sonra neyin eksik kaldığını listeler (⬜ TODO = senin girmen gereken şey).
+
 1. `.env.example` dosyasını `.env` adıyla kopyala ve doldur. Bot bu dosyayı kendisi okur. `.env` asla commit edilmez.
 2. `config/settings.yaml` içinde `mode` ve `broker` ayarlarını seç.
 3. **Telegram (önerilir):**
