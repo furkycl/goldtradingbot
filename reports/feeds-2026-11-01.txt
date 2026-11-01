@@ -1,0 +1,10 @@
+ok                     newest     0.4h  https://www.financialjuice.com/feed.ashx?xy=rss
+ok                     newest    37.9h  https://investinglive.com/feed/news
+ok                     newest     5.1h  https://www.investing.com/rss/news_95.rss
+EMPTY (http 403)       newest        -  https://www.fxstreet.com/rss/news
+ok                     newest     1.8h  https://www.investing.com/rss/news_11.rss
+ok                     newest    89.5h  https://www.federalreserve.gov/feeds/press_monetary.xml
+ok                     newest    63.0h  https://www.federalreserve.gov/feeds/press_all.xml
+ok                     newest    43.3h  https://www.ecb.europa.eu/rss/press.html
+ok                     newest    15.3h  https://feeds.content.dowjones.io/public/rss/mw_topstories
+ok                     newest     1.1h  https://www.bloomberght.com/rss

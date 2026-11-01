@@ -1,0 +1,282 @@
+{
+  "date": "2026-11-01",
+  "bars": 13271,
+  "start": "2024-06-10 04:00:00+00:00",
+  "end": "2026-10-04 23:00:00+00:00",
+  "rows": [
+    {
+      "variant": "baseline (current params)",
+      "changes": {},
+      "evidence": "params.yaml",
+      "score_1x": 1.7911,
+      "score_2x": 1.725,
+      "pf_1x": 1.81,
+      "pf_2x": 1.78,
+      "worst_dd_1x": 4.66,
+      "trades_1x": 155,
+      "fold_returns_1x": [
+        -0.66,
+        4.28,
+        5.69,
+        6.52
+      ],
+      "fold_returns_2x": [
+        -0.85,
+        4.19,
+        5.55,
+        6.33
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "A1 daily trend 60d",
+      "changes": {
+        "daily_trend_days": 60
+      },
+      "evidence": "Bartsch et al.; AQR century of trend",
+      "score_1x": 0.6743,
+      "score_2x": 0.6415,
+      "pf_1x": 1.5,
+      "pf_2x": 1.48,
+      "worst_dd_1x": 3.92,
+      "trades_1x": 93,
+      "fold_returns_1x": [
+        2.5,
+        1.86,
+        5.11,
+        -2.47
+      ],
+      "fold_returns_2x": [
+        2.36,
+        1.81,
+        5.01,
+        -2.54
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "A2 daily trend 120d",
+      "changes": {
+        "daily_trend_days": 120
+      },
+      "evidence": "Bartsch et al.; AQR century of trend",
+      "score_1x": 1.3904,
+      "score_2x": 1.3412,
+      "pf_1x": 1.86,
+      "pf_2x": 1.83,
+      "worst_dd_1x": 2.91,
+      "trades_1x": 93,
+      "fold_returns_1x": [
+        2.87,
+        5.04,
+        4.63,
+        1.73
+      ],
+      "fold_returns_2x": [
+        2.73,
+        4.98,
+        4.56,
+        1.64
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "A3 daily trend 20d",
+      "changes": {
+        "daily_trend_days": 20
+      },
+      "evidence": "shorter variant, robustness check",
+      "score_1x": 0.7381,
+      "score_2x": 0.7036,
+      "pf_1x": 1.57,
+      "pf_2x": 1.55,
+      "worst_dd_1x": 4.69,
+      "trades_1x": 102,
+      "fold_returns_1x": [
+        1.3,
+        3.21,
+        6.74,
+        1.3
+      ],
+      "fold_returns_2x": [
+        1.18,
+        3.16,
+        6.64,
+        1.18
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "B1 session 07-17 UTC",
+      "changes": {
+        "session_start_utc": 7,
+        "session_end_utc": 17
+      },
+      "evidence": "Batten et al. 2017 liquidity",
+      "score_1x": 1.8222,
+      "score_2x": 1.7418,
+      "pf_1x": 1.85,
+      "pf_2x": 1.81,
+      "worst_dd_1x": 4.38,
+      "trades_1x": 111,
+      "fold_returns_1x": [
+        -0.18,
+        6.65,
+        4.27,
+        4.65
+      ],
+      "fold_returns_2x": [
+        -0.31,
+        6.6,
+        4.15,
+        4.5
+      ],
+      "guardrails": "ok",
+      "robust": true
+    },
+    {
+      "variant": "B2 session 06-20 UTC",
+      "changes": {
+        "session_start_utc": 6,
+        "session_end_utc": 20
+      },
+      "evidence": "wider window",
+      "score_1x": 1.4592,
+      "score_2x": 1.3868,
+      "pf_1x": 1.67,
+      "pf_2x": 1.64,
+      "worst_dd_1x": 4.44,
+      "trades_1x": 127,
+      "fold_returns_1x": [
+        -0.09,
+        6.16,
+        3.35,
+        5.25
+      ],
+      "fold_returns_2x": [
+        -0.23,
+        6.09,
+        3.22,
+        5.09
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "E1 time stop 12 bars",
+      "changes": {
+        "max_hold_bars": 12
+      },
+      "evidence": "practitioner, weak",
+      "score_1x": 1.7911,
+      "score_2x": 1.725,
+      "pf_1x": 1.81,
+      "pf_2x": 1.78,
+      "worst_dd_1x": 4.66,
+      "trades_1x": 155,
+      "fold_returns_1x": [
+        -0.66,
+        4.28,
+        5.69,
+        6.52
+      ],
+      "fold_returns_2x": [
+        -0.85,
+        4.19,
+        5.55,
+        6.33
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "E2 time stop 24 bars",
+      "changes": {
+        "max_hold_bars": 24
+      },
+      "evidence": "practitioner, weak",
+      "score_1x": 0.7013,
+      "score_2x": 0.6602,
+      "pf_1x": 1.32,
+      "pf_2x": 1.31,
+      "worst_dd_1x": 7.59,
+      "trades_1x": 135,
+      "fold_returns_1x": [
+        -5.13,
+        5.72,
+        3.13,
+        2.69
+      ],
+      "fold_returns_2x": [
+        -5.25,
+        5.65,
+        3.01,
+        2.53
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "A1+B1",
+      "changes": {
+        "daily_trend_days": 60,
+        "session_start_utc": 7,
+        "session_end_utc": 17
+      },
+      "evidence": "top-2 combined",
+      "score_1x": 0.496,
+      "score_2x": 0.4671,
+      "pf_1x": 1.38,
+      "pf_2x": 1.36,
+      "worst_dd_1x": 2.9,
+      "trades_1x": 64,
+      "fold_returns_1x": [
+        1.9,
+        1.37,
+        4.88,
+        0.71
+      ],
+      "fold_returns_2x": [
+        1.79,
+        1.34,
+        4.81,
+        0.66
+      ],
+      "guardrails": "ok",
+      "robust": false
+    },
+    {
+      "variant": "A2+B2",
+      "changes": {
+        "daily_trend_days": 120,
+        "session_start_utc": 6,
+        "session_end_utc": 20
+      },
+      "evidence": "combined, wider",
+      "score_1x": 1.3914,
+      "score_2x": 1.3405,
+      "pf_1x": 2.08,
+      "pf_2x": 2.06,
+      "worst_dd_1x": 2.62,
+      "trades_1x": 78,
+      "fold_returns_1x": [
+        2.82,
+        4.21,
+        4.42,
+        1.59
+      ],
+      "fold_returns_2x": [
+        2.7,
+        4.16,
+        4.36,
+        1.5
+      ],
+      "guardrails": "ok",
+      "robust": false
+    }
+  ]
+}
