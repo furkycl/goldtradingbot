@@ -1,0 +1,77 @@
+{
+  "date": "2026-11-14",
+  "data": "yfinance GC=F",
+  "bars": 13755,
+  "accepted": false,
+  "reason": "candidate rejected: beats baseline in only 1/4 folds",
+  "baseline_oos": {
+    "median_score": 1.5953,
+    "worst_dd": 4.95,
+    "total_trades": 154,
+    "median_pf": 1.8,
+    "total_return_pct": 17.34,
+    "fold_return_pct": [
+      1.42,
+      3.9,
+      5.36,
+      6.66
+    ],
+    "fold_max_dd_pct": [
+      4.95,
+      2.49,
+      3.3,
+      3.38
+    ],
+    "fold_win_rate_pct": [
+      45.2,
+      44.4,
+      45.0,
+      53.3
+    ]
+  },
+  "holdout": {
+    "from": "2026-10-05 00:00:00+00:00",
+    "to": "2026-11-13 21:00:00+00:00",
+    "bars": 691,
+    "current_params_forward_test": {
+      "start_equity": 10000.0,
+      "end_equity": 10461.3,
+      "return_pct": 4.61,
+      "max_drawdown_pct": 2.03,
+      "trades": 24,
+      "win_rate_pct": 41.7,
+      "profit_factor": 1.98,
+      "sharpe": 3.75,
+      "skipped_below_min_lot": 0,
+      "halts": [],
+      "score": 2.2709,
+      "bars": 691
+    },
+    "candidate": null
+  },
+  "candidate_oos": {
+    "median_score": 0.8224,
+    "worst_dd": 4.97,
+    "total_trades": 134,
+    "median_pf": 1.47,
+    "total_return_pct": 11.85,
+    "fold_return_pct": [
+      0.05,
+      5.25,
+      4.19,
+      2.36
+    ],
+    "fold_max_dd_pct": [
+      4.97,
+      2.2,
+      3.86,
+      4.22
+    ],
+    "fold_win_rate_pct": [
+      40.0,
+      50.0,
+      36.4,
+      43.6
+    ]
+  }
+}
